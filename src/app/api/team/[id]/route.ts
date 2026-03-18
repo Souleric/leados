@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const supabase = createAdminClient();
     const body = await request.json();
     const { name, email, role, status } = body;
@@ -16,7 +17,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     const { data, error } = await supabase
       .from("team_members")
       .update(updates)
-      .eq("id", params.id)
+      .eq("id", id)
       .select("*")
       .single();
 
@@ -28,10 +29,11 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const supabase = createAdminClient();
-    const { error } = await supabase.from("team_members").delete().eq("id", params.id);
+    const { error } = await supabase.from("team_members").delete().eq("id", id);
     if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (err: any) {
