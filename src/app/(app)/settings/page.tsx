@@ -1,25 +1,43 @@
 "use client";
 
 import { Header } from "@/components/layout/header";
-import { useState } from "react";
-import { Wifi, Building2, Users, Webhook } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Wifi, Building2, Users, Webhook, BarChart2 } from "lucide-react";
 import { WhatsAppSettingsTab } from "@/components/settings/whatsapp-tab";
+import { MetaAdsSettingsTab } from "@/components/settings/meta-ads-tab";
 import { BusinessSettingsTab } from "@/components/settings/business-tab";
 import { TeamSettingsTab } from "@/components/settings/team-tab";
 import { WebhookSettingsTab } from "@/components/settings/webhook-tab";
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { id: "whatsapp", label: "WhatsApp", icon: Wifi },
-  { id: "business", label: "Business Profile", icon: Building2 },
-  { id: "team", label: "Team", icon: Users },
-  { id: "webhook", label: "Webhook", icon: Webhook },
+  { id: "whatsapp", label: "WhatsApp",    icon: Wifi,       desc: "WhatsApp Business API" },
+  { id: "meta-ads", label: "Meta Ads",    icon: BarChart2,  desc: "Facebook & Instagram Ads" },
+  { id: "business", label: "Business",    icon: Building2,  desc: "Business profile" },
+  { id: "team",     label: "Team",        icon: Users,      desc: "Manage members" },
+  { id: "webhook",  label: "Webhook",     icon: Webhook,    desc: "Webhook endpoint" },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
 
 export default function SettingsPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [active, setActive] = useState<TabId>("whatsapp");
+
+  // Support ?tab= query param (e.g. from "Add Member" button on Team page)
+  useEffect(() => {
+    const tab = searchParams.get("tab") as TabId | null;
+    if (tab && tabs.find((t) => t.id === tab)) {
+      setActive(tab);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (id: TabId) => {
+    setActive(id);
+    router.replace(`/settings?tab=${id}`, { scroll: false });
+  };
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -29,16 +47,16 @@ export default function SettingsPage() {
           <div className="mb-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">Settings</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              Configure your WhatsApp connection and workspace
+              Configure your integrations and workspace
             </p>
           </div>
 
           {/* Tab nav */}
-          <div className="flex gap-1 mb-6 bg-gray-100 dark:bg-gray-800/60 p-1 rounded-xl w-fit">
+          <div className="flex flex-wrap gap-1 mb-6 bg-gray-100 dark:bg-gray-800/60 p-1 rounded-xl w-fit">
             {tabs.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
-                onClick={() => setActive(id)}
+                onClick={() => handleTabChange(id)}
                 className={cn(
                   "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all",
                   active === id
@@ -55,6 +73,7 @@ export default function SettingsPage() {
           {/* Tab content */}
           <div>
             {active === "whatsapp" && <WhatsAppSettingsTab />}
+            {active === "meta-ads" && <MetaAdsSettingsTab />}
             {active === "business" && <BusinessSettingsTab />}
             {active === "team"     && <TeamSettingsTab />}
             {active === "webhook"  && <WebhookSettingsTab />}

@@ -24,11 +24,14 @@ export async function GET() {
       return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
     }
 
-    // Never expose access token to frontend — mask it
+    // Never expose tokens to frontend — mask them
     const safe = {
       ...data,
       meta_access_token: data.meta_access_token
         ? `${(data.meta_access_token as string).slice(0, 8)}${"•".repeat(20)}`
+        : null,
+      meta_ads_access_token: data.meta_ads_access_token
+        ? `${(data.meta_ads_access_token as string).slice(0, 8)}${"•".repeat(20)}`
         : null,
     };
 
@@ -44,9 +47,12 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const allowed = [
       "name", "slug", "owner_email", "logo_url", "timezone",
+      // WhatsApp
       "meta_app_id", "meta_phone_number_id", "meta_waba_id",
       "meta_access_token", "meta_webhook_verify_token",
       "meta_phone_display", "meta_business_name",
+      // Meta Ads
+      "meta_ad_account_id", "meta_ads_access_token",
     ];
 
     const updates: Record<string, unknown> = {};

@@ -17,7 +17,6 @@ interface WorkspaceData {
   meta_waba_id: string | null;
   meta_access_token: string | null;
   meta_webhook_verify_token: string | null;
-  meta_ad_account_id: string | null;
 }
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -46,7 +45,6 @@ export function WhatsAppSettingsTab() {
   const [wabaId, setWabaId] = useState("");
   const [accessToken, setAccessToken] = useState("");
   const [verifyToken, setVerifyToken] = useState("");
-  const [adAccountId, setAdAccountId] = useState("");
   const [showToken, setShowToken] = useState(false);
 
   const [saveState, setSaveState] = useState<SaveState>("idle");
@@ -67,7 +65,6 @@ export function WhatsAppSettingsTab() {
           setPhoneNumberId(workspace.meta_phone_number_id ?? "");
           setWabaId(workspace.meta_waba_id ?? "");
           setVerifyToken(workspace.meta_webhook_verify_token ?? "");
-          setAdAccountId(workspace.meta_ad_account_id ?? "");
           // Don't pre-fill token (it's masked)
         }
       })
@@ -150,7 +147,6 @@ export function WhatsAppSettingsTab() {
         meta_phone_number_id: phoneNumberId,
         meta_waba_id: wabaId,
         meta_webhook_verify_token: verifyToken,
-        meta_ad_account_id: adAccountId,
       };
       // Only send token if user actually typed a new one (not the masked value)
       if (accessToken && !accessToken.includes("•")) {
@@ -370,7 +366,7 @@ export function WhatsAppSettingsTab() {
                 Access Token
               </label>
               <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-2">
-                Business Settings → System Users → Generate Token. Add permissions: whatsapp_business_messaging + ads_read (for campaign sync)
+                Business Settings → System Users → Generate Token (with whatsapp_business_messaging permission)
               </p>
               <div className="relative">
                 <input

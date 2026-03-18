@@ -46,7 +46,7 @@ export async function POST() {
     // Get workspace credentials
     const { data: workspace, error: wsError } = await supabase
       .from("workspaces")
-      .select("meta_access_token, meta_ad_account_id")
+      .select("meta_access_token, meta_ads_access_token, meta_ad_account_id")
       .eq("id", workspaceId)
       .single();
 
@@ -54,18 +54,19 @@ export async function POST() {
       return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
     }
 
-    const accessToken = workspace.meta_access_token;
+    // Use ads-specific token first, fallback to WhatsApp token (if it has ads_read permission)
+    const accessToken = workspace.meta_ads_access_token || workspace.meta_access_token;
     const rawAccountId = workspace.meta_ad_account_id;
 
     if (!accessToken) {
       return NextResponse.json(
-        { error: "No access token saved. Go to Settings → WhatsApp and save your access token." },
+        { error: "No access token saved. Go to Settings → Meta Ads and save your access token." },
         { status: 400 }
       );
     }
     if (!rawAccountId) {
       return NextResponse.json(
-        { error: "No Ad Account ID saved. Go to Settings → WhatsApp and save your Ad Account ID." },
+        { error: "No Ad Account ID saved. Go to Settings → Meta Ads and save your Ad Account ID." },
         { status: 400 }
       );
     }
