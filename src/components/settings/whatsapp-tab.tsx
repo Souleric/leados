@@ -17,6 +17,7 @@ interface WorkspaceData {
   meta_waba_id: string | null;
   meta_access_token: string | null;
   meta_webhook_verify_token: string | null;
+  meta_ad_account_id: string | null;
 }
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -45,6 +46,7 @@ export function WhatsAppSettingsTab() {
   const [wabaId, setWabaId] = useState("");
   const [accessToken, setAccessToken] = useState("");
   const [verifyToken, setVerifyToken] = useState("");
+  const [adAccountId, setAdAccountId] = useState("");
   const [showToken, setShowToken] = useState(false);
 
   const [saveState, setSaveState] = useState<SaveState>("idle");
@@ -65,6 +67,7 @@ export function WhatsAppSettingsTab() {
           setPhoneNumberId(workspace.meta_phone_number_id ?? "");
           setWabaId(workspace.meta_waba_id ?? "");
           setVerifyToken(workspace.meta_webhook_verify_token ?? "");
+          setAdAccountId(workspace.meta_ad_account_id ?? "");
           // Don't pre-fill token (it's masked)
         }
       })
@@ -147,6 +150,7 @@ export function WhatsAppSettingsTab() {
         meta_phone_number_id: phoneNumberId,
         meta_waba_id: wabaId,
         meta_webhook_verify_token: verifyToken,
+        meta_ad_account_id: adAccountId,
       };
       // Only send token if user actually typed a new one (not the masked value)
       if (accessToken && !accessToken.includes("•")) {
@@ -351,13 +355,22 @@ export function WhatsAppSettingsTab() {
               placeholder="123456789012345"
             />
 
+            {/* Ad Account ID */}
+            <Field
+              label="Ad Account ID"
+              hint='Meta Business Manager → Ad Accounts → Account ID (e.g. "123456789" or "act_123456789")'
+              value={adAccountId}
+              onChange={setAdAccountId}
+              placeholder="123456789"
+            />
+
             {/* Access Token */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                 Access Token
               </label>
               <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-2">
-                Business Settings → System Users → Generate Token (with whatsapp_business_messaging permission)
+                Business Settings → System Users → Generate Token. Add permissions: whatsapp_business_messaging + ads_read (for campaign sync)
               </p>
               <div className="relative">
                 <input
