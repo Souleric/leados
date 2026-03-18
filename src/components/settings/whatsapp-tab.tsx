@@ -351,15 +351,6 @@ export function WhatsAppSettingsTab() {
               placeholder="123456789012345"
             />
 
-            {/* Ad Account ID */}
-            <Field
-              label="Ad Account ID"
-              hint='Meta Business Manager → Ad Accounts → Account ID (e.g. "123456789" or "act_123456789")'
-              value={adAccountId}
-              onChange={setAdAccountId}
-              placeholder="123456789"
-            />
-
             {/* Access Token */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
