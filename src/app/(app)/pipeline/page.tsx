@@ -1,10 +1,13 @@
 "use client";
 
 import { Header } from "@/components/layout/header";
-import { leads, Lead, LeadStatus } from "@/lib/mock-data";
-import { useState } from "react";
+import { AddLeadModal } from "@/components/leads/add-lead-modal";
+import { fetchLeads, updateLead } from "@/lib/api";
+import { DbLead } from "@/lib/supabase/types";
+import { LeadStatus } from "@/lib/mock-data";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { MoreHorizontal, Plus, Loader2 } from "lucide-react";
 
 const COLUMNS: { id: LeadStatus; label: string; color: string; dotColor: string }[] = [
   { id: "new", label: "New Lead", color: "bg-blue-50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900/40", dotColor: "bg-blue-500" },
@@ -22,7 +25,12 @@ function formatRelative(iso: string) {
   return `${days}d ago`;
 }
 
-function PipelineCard({ lead, onDrop }: { lead: Lead; onDrop: (leadId: string, status: LeadStatus) => void }) {
+function initials(name: string | null, phone: string) {
+  if (name) return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+  return phone.slice(-2);
+}
+
+function PipelineCard({ lead }: { lead: DbLead }) {
   return (
     <Link
       href={`/leads/${lead.id}`}
@@ -32,13 +40,16 @@ function PipelineCard({ lead, onDrop }: { lead: Lead; onDrop: (leadId: string, s
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-violet-100 dark:bg-violet-950/50 flex items-center justify-center shrink-0">
-            <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400">
-              {lead.name.split(" ").map((n) => n[0]).slice(0, 2).join("")}
+          <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-950/50 flex items-center justify-center shrink-0">
+            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+              {initials(lead.name, lead.phone)}
             </span>
           </div>
           <div>
-            <p className="text-xs font-semibold text-gray-900 dark:text-white leading-tight">{lead.name}</p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-white leading-tight">
+              {lead.name ?? "Unknown"}
+            </p>
+            <p className="text-[10px] text-gray-400 mt-0.5">{lead.phone}</p>
           </div>
         </div>
         <button
@@ -49,17 +60,21 @@ function PipelineCard({ lead, onDrop }: { lead: Lead; onDrop: (leadId: string, s
         </button>
       </div>
       <div className="flex items-center gap-1.5 mb-2">
-        <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 font-medium">
-          {lead.inquiryType}
-        </span>
-        <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-          {lead.source}
-        </span>
+        {lead.source && (
+          <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+            {lead.source}
+          </span>
+        )}
+        {lead.campaign && (
+          <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 font-medium truncate max-w-[100px]">
+            {lead.campaign}
+          </span>
+        )}
       </div>
       <div className="flex items-center justify-between">
-        <span className="text-[11px] text-gray-400 dark:text-gray-500">{formatRelative(lead.createdAt)}</span>
-        {lead.budget && (
-          <span className="text-[11px] font-medium text-gray-600 dark:text-gray-400">{lead.budget.split(" ")[0]}{lead.budget.split(" ")[1]}</span>
+        <span className="text-[11px] text-gray-400 dark:text-gray-500">{formatRelative(lead.created_at)}</span>
+        {lead.assigned_to && (
+          <span className="text-[11px] text-gray-400 dark:text-gray-500 truncate max-w-[80px]">{lead.assigned_to}</span>
         )}
       </div>
     </Link>
@@ -67,108 +82,141 @@ function PipelineCard({ lead, onDrop }: { lead: Lead; onDrop: (leadId: string, s
 }
 
 export default function PipelinePage() {
-  const [columnLeads, setColumnLeads] = useState<Record<LeadStatus, Lead[]>>(() => {
-    const grouped: Record<LeadStatus, Lead[]> = {
-      new: [],
-      contacted: [],
-      quotation_sent: [],
-      closed_won: [],
-      lost: [],
-    };
-    leads.forEach((lead) => {
-      grouped[lead.status].push(lead);
-    });
-    return grouped;
+  const [columnLeads, setColumnLeads] = useState<Record<LeadStatus, DbLead[]>>({
+    new: [], contacted: [], quotation_sent: [], closed_won: [], lost: [],
   });
+  const [loading, setLoading] = useState(true);
   const [dragOverCol, setDragOverCol] = useState<LeadStatus | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [totalLeads, setTotalLeads] = useState(0);
+  const [wonCount, setWonCount] = useState(0);
 
-  const handleDrop = (e: React.DragEvent, targetStatus: LeadStatus) => {
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetchLeads({ limit: 200 });
+      const grouped: Record<LeadStatus, DbLead[]> = {
+        new: [], contacted: [], quotation_sent: [], closed_won: [], lost: [],
+      };
+      for (const lead of res.leads) {
+        const s = lead.status as LeadStatus;
+        if (grouped[s]) grouped[s].push(lead);
+      }
+      setColumnLeads(grouped);
+      setTotalLeads(res.total);
+      setWonCount(grouped.closed_won.length);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleDrop = async (e: React.DragEvent, targetStatus: LeadStatus) => {
     e.preventDefault();
     const leadId = e.dataTransfer.getData("leadId");
     setColumnLeads((prev) => {
-      const newState = { ...prev };
-      let lead: Lead | undefined;
-      for (const status of Object.keys(newState) as LeadStatus[]) {
-        const idx = newState[status].findIndex((l) => l.id === leadId);
+      const next = { ...prev };
+      let moved: DbLead | undefined;
+      for (const s of Object.keys(next) as LeadStatus[]) {
+        const idx = next[s].findIndex((l) => l.id === leadId);
         if (idx !== -1) {
-          [lead] = newState[status].splice(idx, 1);
-          newState[status] = [...newState[status]];
+          [moved] = next[s].splice(idx, 1);
+          next[s] = [...next[s]];
           break;
         }
       }
-      if (lead) {
-        newState[targetStatus] = [...newState[targetStatus], { ...lead, status: targetStatus }];
+      if (moved) {
+        next[targetStatus] = [...next[targetStatus], { ...moved, status: targetStatus }];
       }
-      return newState;
+      return { ...next };
     });
     setDragOverCol(null);
+    // Persist status change
+    try { await updateLead(leadId, { status: targetStatus }); } catch (e) { console.error(e); }
   };
 
-  const totalValue = leads.filter((l) => l.status === "closed_won").length;
-
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
-      <Header title="Pipeline" />
-      <main className="flex-1 overflow-hidden p-6">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sales Pipeline</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              {leads.length} leads · {totalValue} won
-            </p>
+    <>
+      <AddLeadModal open={showModal} onClose={() => setShowModal(false)} onCreated={load} />
+
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <Header title="Pipeline" />
+        <main className="flex-1 overflow-hidden p-6">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sales Pipeline</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                {loading ? "Loading..." : `${totalLeads} leads · ${wonCount} won`}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowModal(true)}
+              className="flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add Lead
+            </button>
           </div>
-          <button className="flex items-center gap-2 px-3 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors">
-            <Plus className="w-4 h-4" />
-            Add Lead
-          </button>
-        </div>
 
-        <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin h-[calc(100%-5rem)]">
-          {COLUMNS.map((col) => {
-            const colLeads = columnLeads[col.id] || [];
-            return (
-              <div
-                key={col.id}
-                className={`flex flex-col flex-shrink-0 w-64 rounded-2xl border p-3 transition-all ${col.color} ${
-                  dragOverCol === col.id ? "ring-2 ring-violet-300 dark:ring-violet-700" : ""
-                }`}
-                onDragOver={(e) => { e.preventDefault(); setDragOverCol(col.id); }}
-                onDragLeave={() => setDragOverCol(null)}
-                onDrop={(e) => handleDrop(e, col.id)}
-              >
-                {/* Column header */}
-                <div className="flex items-center justify-between mb-3 px-0.5">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${col.dotColor}`} />
-                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">{col.label}</span>
-                  </div>
-                  <span className="text-[11px] font-medium px-1.5 py-0.5 bg-white/70 dark:bg-gray-900/50 rounded-full text-gray-500 dark:text-gray-400">
-                    {colLeads.length}
-                  </span>
-                </div>
-
-                {/* Cards */}
-                <div className="flex-1 overflow-y-auto space-y-2 scrollbar-thin min-h-[100px]">
-                  {colLeads.length === 0 ? (
-                    <div className="flex items-center justify-center h-20 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
-                      <p className="text-[11px] text-gray-400 dark:text-gray-500">Drop leads here</p>
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
+            </div>
+          ) : (
+            <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin h-[calc(100%-5rem)]">
+              {COLUMNS.map((col) => {
+                const colLeads = columnLeads[col.id] ?? [];
+                return (
+                  <div
+                    key={col.id}
+                    className={`flex flex-col flex-shrink-0 w-64 rounded-2xl border p-3 transition-all ${col.color} ${
+                      dragOverCol === col.id ? "ring-2 ring-indigo-300 dark:ring-indigo-700" : ""
+                    }`}
+                    onDragOver={(e) => { e.preventDefault(); setDragOverCol(col.id); }}
+                    onDragLeave={() => setDragOverCol(null)}
+                    onDrop={(e) => handleDrop(e, col.id)}
+                  >
+                    {/* Column header */}
+                    <div className="flex items-center justify-between mb-3 px-0.5">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${col.dotColor}`} />
+                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">{col.label}</span>
+                      </div>
+                      <span className="text-[11px] font-medium px-1.5 py-0.5 bg-white/70 dark:bg-gray-900/50 rounded-full text-gray-500 dark:text-gray-400">
+                        {colLeads.length}
+                      </span>
                     </div>
-                  ) : (
-                    colLeads.map((lead) => (
-                      <PipelineCard key={lead.id} lead={lead} onDrop={() => {}} />
-                    ))
-                  )}
-                </div>
 
-                <button className="mt-2 flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors py-1.5 px-2 rounded-lg hover:bg-white/50 dark:hover:bg-gray-900/30">
-                  <Plus className="w-3 h-3" />
-                  Add
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      </main>
-    </div>
+                    {/* Cards */}
+                    <div className="flex-1 overflow-y-auto space-y-2 scrollbar-thin min-h-[100px]">
+                      {colLeads.length === 0 ? (
+                        <div className="flex items-center justify-center h-20 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+                          <p className="text-[11px] text-gray-400 dark:text-gray-500">Drop leads here</p>
+                        </div>
+                      ) : (
+                        colLeads.map((lead) => (
+                          <PipelineCard key={lead.id} lead={lead} />
+                        ))
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => setShowModal(true)}
+                      className="mt-2 flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors py-1.5 px-2 rounded-lg hover:bg-white/50 dark:hover:bg-gray-900/30"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Add
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </main>
+      </div>
+    </>
   );
 }
