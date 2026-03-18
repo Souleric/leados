@@ -57,17 +57,34 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient();
 
+    const workspaceId = process.env.WORKSPACE_ID;
+    if (!workspaceId) {
+      return NextResponse.json({ error: "WORKSPACE_ID env var not set" }, { status: 500 });
+    }
+
     const { data, error } = await supabase
       .from("leads")
-      .insert({ phone, name, source: source ?? "Manual", campaign, status: status ?? "new" })
+      .insert({
+        workspace_id: workspaceId,
+        phone,
+        name: name || null,
+        source: source ?? "Manual",
+        campaign: campaign || null,
+        status: status ?? "new",
+        assigned_to: body.assigned_to || null,
+        notes: body.notes || null,
+      })
       .select("*")
       .single();
 
     if (error) throw error;
 
     return NextResponse.json({ lead: data }, { status: 201 });
-  } catch (err) {
+  } catch (err: any) {
     console.error("[POST /api/leads]", err);
-    return NextResponse.json({ error: "Failed to create lead" }, { status: 500 });
+    return NextResponse.json(
+      { error: err?.message ?? "Failed to create lead" },
+      { status: 500 }
+    );
   }
 }
