@@ -1,7 +1,7 @@
 "use client";
 
 import { Header } from "@/components/layout/header";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Wifi, Building2, Users, Webhook, BarChart2 } from "lucide-react";
 import { WhatsAppSettingsTab } from "@/components/settings/whatsapp-tab";
@@ -21,7 +21,7 @@ const tabs = [
 
 type TabId = (typeof tabs)[number]["id"];
 
-export default function SettingsPage() {
+function SettingsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [active, setActive] = useState<TabId>("whatsapp");
@@ -81,5 +81,13 @@ export default function SettingsPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="flex flex-col flex-1 overflow-hidden" />}>
+      <SettingsContent />
+    </Suspense>
   );
 }
