@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Loader2, UserPlus } from "lucide-react";
 
 const SOURCES = ["Facebook", "Instagram", "TikTok", "Referral", "Website", "Walk-in", "WhatsApp"];
@@ -20,6 +20,16 @@ interface Props {
 }
 
 export function AddLeadModal({ open, onClose, onCreated }: Props) {
+  const [teamMembers, setTeamMembers] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    fetch("/api/team")
+      .then((r) => r.json())
+      .then((d) => setTeamMembers(d.members ?? []))
+      .catch(() => {});
+  }, [open]);
+
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -140,13 +150,26 @@ export function AddLeadModal({ open, onClose, onCreated }: Props) {
 
           {/* Assigned To */}
           <Field label="Assigned To" hint="Optional">
-            <input
-              type="text"
-              value={form.assigned_to}
-              onChange={(e) => set("assigned_to", e.target.value)}
-              placeholder="Agent name"
-              className={inputCls}
-            />
+            {teamMembers.length > 0 ? (
+              <select
+                value={form.assigned_to}
+                onChange={(e) => set("assigned_to", e.target.value)}
+                className={inputCls}
+              >
+                <option value="">— Unassigned —</option>
+                {teamMembers.map((m) => (
+                  <option key={m.id} value={m.name}>{m.name}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                value={form.assigned_to}
+                onChange={(e) => set("assigned_to", e.target.value)}
+                placeholder="Agent name"
+                className={inputCls}
+              />
+            )}
           </Field>
 
           {/* Notes */}
