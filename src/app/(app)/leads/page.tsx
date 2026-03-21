@@ -2,8 +2,7 @@
 
 import { Header } from "@/components/layout/header";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { LeadStatus, LeadSource } from "@/lib/mock-data";
-import { DbLead } from "@/lib/supabase/types";
+import { DbLead, LeadStatus, LeadSource } from "@/lib/supabase/types";
 import { fetchLeads } from "@/lib/api";
 import { AddLeadModal } from "@/components/leads/add-lead-modal";
 import Link from "next/link";

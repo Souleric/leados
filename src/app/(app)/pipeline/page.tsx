@@ -3,18 +3,17 @@
 import { Header } from "@/components/layout/header";
 import { AddLeadModal } from "@/components/leads/add-lead-modal";
 import { fetchLeads, updateLead } from "@/lib/api";
-import { DbLead } from "@/lib/supabase/types";
-import { LeadStatus } from "@/lib/mock-data";
+import { DbLead, LeadStatus } from "@/lib/supabase/types";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { MoreHorizontal, Plus, Loader2 } from "lucide-react";
 
 const COLUMNS: { id: LeadStatus; label: string; color: string; dotColor: string }[] = [
-  { id: "new", label: "New Lead", color: "bg-blue-50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900/40", dotColor: "bg-blue-500" },
-  { id: "contacted", label: "Contacted", color: "bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/40", dotColor: "bg-amber-500" },
-  { id: "quotation_sent", label: "Quotation Sent", color: "bg-violet-50 dark:bg-violet-950/20 border-violet-100 dark:border-violet-900/40", dotColor: "bg-violet-500" },
-  { id: "closed_won", label: "Closed Won", color: "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/40", dotColor: "bg-emerald-500" },
-  { id: "lost", label: "Lost", color: "bg-gray-50 dark:bg-gray-800/30 border-gray-100 dark:border-gray-800", dotColor: "bg-gray-400" },
+  { id: "new",           label: "New Lead",       color: "bg-blue-100 border-blue-300 dark:bg-blue-950/60 dark:border-blue-700",       dotColor: "bg-blue-600" },
+  { id: "contacted",     label: "Contacted",      color: "bg-amber-100 border-amber-300 dark:bg-amber-950/60 dark:border-amber-700",   dotColor: "bg-amber-500" },
+  { id: "quotation_sent",label: "Quotation Sent", color: "bg-violet-100 border-violet-300 dark:bg-violet-950/60 dark:border-violet-700", dotColor: "bg-violet-600" },
+  { id: "closed_won",    label: "Closed Won",     color: "bg-emerald-100 border-emerald-300 dark:bg-emerald-950/60 dark:border-emerald-700", dotColor: "bg-emerald-600" },
+  { id: "lost",          label: "Lost",           color: "bg-gray-200 border-gray-400 dark:bg-gray-800/70 dark:border-gray-600",       dotColor: "bg-gray-500" },
 ];
 
 function formatRelative(iso: string) {
@@ -36,7 +35,7 @@ function PipelineCard({ lead }: { lead: DbLead }) {
       href={`/leads/${lead.id}`}
       draggable
       onDragStart={(e) => e.dataTransfer.setData("leadId", lead.id)}
-      className="block bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl p-3.5 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-700 transition-all cursor-pointer group"
+      className="block bg-white dark:bg-[#1E2238] border border-[#D8DCFF] dark:border-[#252840] rounded-xl p-3.5 hover:shadow-md hover:border-[#3D52F5]/30 dark:hover:border-[#3D52F5]/40 transition-all cursor-pointer group"
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -134,8 +133,13 @@ export default function PipelinePage() {
       return { ...next };
     });
     setDragOverCol(null);
-    // Persist status change
-    try { await updateLead(leadId, { status: targetStatus }); } catch (e) { console.error(e); }
+    // Persist status change — reload on failure to revert optimistic update
+    try {
+      await updateLead(leadId, { status: targetStatus });
+    } catch (e) {
+      console.error(e);
+      load(); // revert UI to match DB
+    }
   };
 
   return (
@@ -173,7 +177,7 @@ export default function PipelinePage() {
                   <div
                     key={col.id}
                     className={`flex flex-col flex-shrink-0 w-64 rounded-2xl border p-3 transition-all ${col.color} ${
-                      dragOverCol === col.id ? "ring-2 ring-indigo-300 dark:ring-indigo-700" : ""
+                      dragOverCol === col.id ? "ring-2 ring-[#3D52F5]/50 dark:ring-[#3D52F5]/60" : ""
                     }`}
                     onDragOver={(e) => { e.preventDefault(); setDragOverCol(col.id); }}
                     onDragLeave={() => setDragOverCol(null)}

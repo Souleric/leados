@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Trash2, Users, Loader2 } from "lucide-react";
+import { Plus, Trash2, Users, Loader2, Shield } from "lucide-react";
 
 const COLORS = [
   "#7c3aed", "#2563eb", "#059669", "#d97706", "#dc2626",
@@ -16,6 +16,14 @@ interface Member {
   avatar_color: string;
   status: string;
   created_at: string;
+  username: string | null;
+  is_master_admin: boolean;
+}
+
+interface AuthUser {
+  id: string;
+  role: string;
+  is_master_admin: boolean;
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -31,19 +39,27 @@ function avatarInitials(name: string) {
 export function TeamSettingsTab() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "agent" | "viewer">("agent");
+  const [newUsername, setNewUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/team");
-      const data = await res.json();
-      setMembers(data.members ?? []);
+      const [teamRes, meRes] = await Promise.all([
+        fetch("/api/team"),
+        fetch("/api/auth/me"),
+      ]);
+      const teamData = await teamRes.json();
+      const meData = meRes.ok ? await meRes.json() : null;
+      setMembers(teamData.members ?? []);
+      setCurrentUser(meData?.user ?? null);
     } catch (e) {
       console.error(e);
     } finally {
@@ -53,19 +69,24 @@ export function TeamSettingsTab() {
 
   useEffect(() => { load(); }, [load]);
 
+  const isAdmin = currentUser?.is_master_admin || currentUser?.role === "admin";
+
   const addMember = async () => {
     if (!newName.trim()) { setError("Name is required"); return; }
+    if (!newUsername.trim()) { setError("Username is required"); return; }
+    if (!newPassword || newPassword.length < 6) { setError("Password must be at least 6 characters"); return; }
     setSaving(true);
     setError("");
     try {
       const res = await fetch("/api/team", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName, email: newEmail, role: newRole }),
+        body: JSON.stringify({ name: newName, email: newEmail, role: newRole, username: newUsername, password: newPassword }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to add member");
       setNewName(""); setNewEmail(""); setNewRole("agent");
+      setNewUsername(""); setNewPassword("");
       setShowAdd(false);
       await load();
     } catch (e: any) {
@@ -76,7 +97,6 @@ export function TeamSettingsTab() {
   };
 
   const updateRole = async (id: string, role: string) => {
-    // Optimistic
     setMembers((prev) => prev.map((m) => m.id === id ? { ...m, role: role as Member["role"] } : m));
     await fetch(`/api/team/${id}`, {
       method: "PATCH",
@@ -109,20 +129,22 @@ export function TeamSettingsTab() {
               {members.length}
             </span>
           </div>
-          <button
-            onClick={() => { setShowAdd(true); setError(""); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Add Member
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => { setShowAdd(true); setError(""); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Member
+            </button>
+          )}
         </div>
 
         {/* Add member form */}
-        {showAdd && (
+        {showAdd && isAdmin && (
           <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 bg-violet-50/50 dark:bg-violet-950/10">
             <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3">New Team Member</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
               <input
                 type="text"
                 value={newName}
@@ -135,6 +157,22 @@ export function TeamSettingsTab() {
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
                 placeholder="Email (optional)"
+                className="text-xs px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:border-violet-300 dark:focus:border-violet-700 transition-colors"
+              />
+              <input
+                type="text"
+                value={newUsername}
+                onChange={(e) => setNewUsername(e.target.value)}
+                placeholder="Username *"
+                autoComplete="off"
+                className="text-xs px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:border-violet-300 dark:focus:border-violet-700 transition-colors"
+              />
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Password * (min 6 chars)"
+                autoComplete="new-password"
                 className="text-xs px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:border-violet-300 dark:focus:border-violet-700 transition-colors"
               />
               <select
@@ -184,38 +222,53 @@ export function TeamSettingsTab() {
               >
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: (COLORS[members.indexOf(m) % COLORS.length]) + "20" }}
+                  style={{ backgroundColor: (COLORS[i % COLORS.length]) + "20" }}
                 >
-                  <span className="text-[11px] font-bold" style={{ color: COLORS[members.indexOf(m) % COLORS.length] }}>
+                  <span className="text-[11px] font-bold" style={{ color: COLORS[i % COLORS.length] }}>
                     {avatarInitials(m.name)}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{m.name}</p>
-                  {m.email && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{m.email}</p>}
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{m.name}</p>
+                    {m.is_master_admin && (
+                      <span title="Master Admin">
+                        <Shield className="w-3 h-3 text-violet-500" />
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                    {m.username ? `@${m.username}` : ""}
+                    {m.email ? (m.username ? ` · ${m.email}` : m.email) : ""}
+                  </p>
                 </div>
-                <select
-                  value={m.role}
-                  onChange={(e) => updateRole(m.id, e.target.value)}
-                  className="text-xs px-2.5 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 outline-none cursor-pointer hidden sm:block"
-                >
-                  <option value="admin">Admin</option>
-                  <option value="agent">Agent</option>
-                  <option value="viewer">Viewer</option>
-                </select>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium hidden sm:inline-flex ${
-                  m.role === "admin"
-                    ? "bg-violet-50 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300"
-                    : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
-                }`}>
-                  {ROLE_LABELS[m.role]}
-                </span>
-                <button
-                  onClick={() => removeMember(m.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 transition-all rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                {isAdmin && !m.is_master_admin ? (
+                  <select
+                    value={m.role}
+                    onChange={(e) => updateRole(m.id, e.target.value)}
+                    className="text-xs px-2.5 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 outline-none cursor-pointer hidden sm:block"
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="agent">Agent</option>
+                    <option value="viewer">Viewer</option>
+                  </select>
+                ) : (
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium hidden sm:inline-flex ${
+                    m.is_master_admin || m.role === "admin"
+                      ? "bg-violet-50 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300"
+                      : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                  }`}>
+                    {m.is_master_admin ? "Master Admin" : ROLE_LABELS[m.role]}
+                  </span>
+                )}
+                {isAdmin && !m.is_master_admin && (
+                  <button
+                    onClick={() => removeMember(m.id)}
+                    className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 transition-all rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -227,19 +280,17 @@ export function TeamSettingsTab() {
         <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Role Permissions</p>
         <div className="space-y-1.5">
           {[
-            { role: "Admin",  desc: "Full access — settings, all leads, can delete" },
-            { role: "Agent",  desc: "View + edit leads, send messages, update status" },
-            { role: "Viewer", desc: "Read-only access to dashboard and leads" },
+            { role: "Master Admin", desc: "Full control — cannot be removed, can change password" },
+            { role: "Admin",        desc: "Full access — settings, all leads, manage team" },
+            { role: "Agent",        desc: "Can only edit leads assigned to them" },
+            { role: "Viewer",       desc: "Read-only access to dashboard and leads" },
           ].map(({ role, desc }) => (
-            <div key={role} className="flex items-center gap-2 text-xs">
-              <span className="font-medium text-gray-700 dark:text-gray-300 w-14">{role}</span>
+            <div key={role} className="flex items-start gap-2 text-xs">
+              <span className="font-medium text-gray-700 dark:text-gray-300 w-24 shrink-0">{role}</span>
               <span className="text-gray-400 dark:text-gray-500">{desc}</span>
             </div>
           ))}
         </div>
-        <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-3">
-          Login access will be available in a future update.
-        </p>
       </div>
     </div>
   );

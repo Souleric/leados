@@ -1,4 +1,5 @@
 export type LeadStatus = "new" | "contacted" | "quotation_sent" | "closed_won" | "lost";
+export type LeadSource = "Facebook" | "Instagram" | "TikTok" | "Referral" | "Website" | "Walk-in" | "WhatsApp" | "Manual";
 export type MessageDirection = "inbound" | "outbound";
 export type MessageType = "text" | "image" | "audio" | "document" | "template" | "interactive" | "unknown";
 

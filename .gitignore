@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# credentials reference file — keep local only
+PROJECT-CREDENTIALS.txt
+
 # debug
 npm-debug.log*
 yarn-debug.log*

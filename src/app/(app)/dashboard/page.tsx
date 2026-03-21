@@ -33,6 +33,8 @@ function statusBadgeCls(status: string) {
 
 export default function DashboardPage() {
   const [kpis, setKpis] = useState<Kpis>({ totalLeads: 0, qualifiedLeads: 0, closedWon: 0, conversionRate: 0 });
+  const [perDay, setPerDay] = useState<{ date: string; total: number; qualified: number }[]>([]);
+  const [perSource, setPerSource] = useState<{ source: string; total: number }[]>([]);
   const [recentLeads, setRecentLeads] = useState<DbLead[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,20 +47,8 @@ export default function DashboardPage() {
         ]);
         if (analyticsRes?.kpis) {
           setKpis(analyticsRes.kpis);
-        } else {
-          // Derive from leads when analytics not available
-          const total = leadsRes.total;
-          const leads = leadsRes.leads;
-          const won = leads.filter((l: DbLead) => l.status === "closed_won").length;
-          const qualified = leads.filter((l: DbLead) =>
-            ["contacted", "quotation_sent", "closed_won"].includes(l.status)
-          ).length;
-          setKpis({
-            totalLeads: total,
-            qualifiedLeads: qualified,
-            closedWon: won,
-            conversionRate: total > 0 ? Math.round((won / total) * 100) : 0,
-          });
+          setPerDay(analyticsRes.perDay ?? []);
+          setPerSource(analyticsRes.perSource ?? []);
         }
         setRecentLeads(leadsRes.leads.slice(0, 5));
       } catch (e) {
@@ -167,14 +157,14 @@ export default function DashboardPage() {
         {/* ── Chart Row 1 ─────────────────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
           <div className="lg:col-span-2">
-            <LeadsOverTimeChart />
+            <LeadsOverTimeChart data={perDay} />
           </div>
-          <InquiryBreakdownChart />
+          <InquiryBreakdownChart kpis={kpis} />
         </div>
 
         {/* ── Chart Row 2 ─────────────────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <LeadsBySourceChart />
+          <LeadsBySourceChart data={perSource} />
 
           {/* Recent Activity */}
           <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] p-5">

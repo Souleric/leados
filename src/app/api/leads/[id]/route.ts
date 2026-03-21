@@ -40,6 +40,37 @@ export async function PATCH(
       return NextResponse.json({ error: "No valid fields" }, { status: 400 });
     }
 
+    // RBAC: agents can only edit leads assigned to them, and cannot reassign
+    const callerRole = request.headers.get("x-auth-user-role");
+    const isMasterAdmin = request.headers.get("x-auth-is-master-admin") === "true";
+    const callerName = request.headers.get("x-auth-user-name");
+
+    if (!isMasterAdmin && callerRole === "agent") {
+      // Agents can never reassign a lead
+      delete updates.assigned_to;
+
+      // If only updating status (pipeline drag), allow it for any lead
+      const sensitiveFields = ["name", "notes", "tags", "campaign"];
+      const touchesSensitive = sensitiveFields.some((f) => f in updates);
+
+      if (touchesSensitive) {
+        // Editing lead details — only allowed on assigned leads
+        const supabase = createAdminClient();
+        const { data: lead } = await supabase
+          .from("leads")
+          .select("assigned_to")
+          .eq("id", id)
+          .single();
+
+        if (!lead?.assigned_to || lead.assigned_to !== callerName) {
+          return NextResponse.json(
+            { error: "Agents can only edit details of leads assigned to them" },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
     const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("leads")

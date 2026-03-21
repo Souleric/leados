@@ -4,12 +4,13 @@ import { use } from "react";
 import { Header } from "@/components/layout/header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { fetchLead, fetchMessages, sendMessage, updateLead } from "@/lib/api";
-import type { DbLead, DbMessage, LeadStatus } from "@/lib/supabase/types";
+import type { DbLead, DbMessage, DbTeamMember, LeadStatus } from "@/lib/supabase/types";
 import Link from "next/link";
 import {
-  Phone, MapPin, Tag, ChevronLeft, Send, MoreHorizontal,
-  Wallet, User, StickyNote, CheckCircle2, Loader2,
+  Phone, Tag, ChevronLeft, Send, MoreHorizontal,
+  User, StickyNote, CheckCircle2, Loader2, FileText, Receipt, Plus, Trash2, ExternalLink,
 } from "lucide-react";
+import { DocumentPicker } from "@/components/leads/document-picker";
 import { useState, useEffect, useRef } from "react";
 
 function formatTime(iso: string) {
@@ -37,23 +38,61 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
 
   const [status, setStatus] = useState<LeadStatus>("new");
   const [notes, setNotes] = useState("");
+  const [assignedTo, setAssignedTo] = useState<string | null>(null);
+  const [teamMembers, setTeamMembers] = useState<DbTeamMember[]>([]);
   const [saving, setSaving] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ name: string; role: string; is_master_admin: boolean } | null>(null);
+
+  // Documents
+  const [linkedDocs, setLinkedDocs] = useState<any[]>([]);
+  const [showPicker, setShowPicker] = useState(false);
+  const [unlinkingId, setUnlinkingId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load lead
+  // Load lead + team members
   useEffect(() => {
     fetchLead(id)
       .then((l) => {
         setLead(l);
         setStatus(l.status);
         setNotes(l.notes ?? "");
+        setAssignedTo(l.assigned_to ?? null);
       })
       .catch(console.error)
       .finally(() => setLoadingLead(false));
+
+    fetch("/api/team")
+      .then((r) => r.json())
+      .then((d) => setTeamMembers(d.members ?? []))
+      .catch(console.error);
+
+    fetch("/api/auth/me")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => setCurrentUser(d?.user ?? null))
+      .catch(console.error);
+
+    fetchLinkedDocs();
   }, [id]);
+
+  function fetchLinkedDocs() {
+    fetch(`/api/leads/${id}/documents`)
+      .then((r) => r.json())
+      .then((d) => setLinkedDocs(d.documents ?? []))
+      .catch(console.error);
+  }
+
+  async function handleUnlink(docId: string) {
+    setUnlinkingId(docId);
+    try {
+      await fetch(`/api/leads/${id}/documents/${docId}`, { method: "DELETE" });
+      setLinkedDocs((prev) => prev.filter((d) => d.id !== docId));
+    } finally {
+      setUnlinkingId(null);
+    }
+  }
 
   // Load messages
   useEffect(() => {
@@ -68,11 +107,18 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const isAgent = !!(currentUser && !currentUser.is_master_admin && currentUser.role === "agent");
+  // Agents can only edit details of leads assigned to them
+  const canEditDetails = !isAgent || (lead?.assigned_to != null && lead.assigned_to === currentUser?.name);
+
   const handleSaveStatus = async () => {
     if (!lead) return;
     setSaving(true);
     try {
-      const updated = await updateLead(id, { status, notes });
+      const updates: Partial<DbLead> = { status, notes };
+      // Agents cannot reassign leads
+      if (!isAgent) updates.assigned_to = assignedTo;
+      const updated = await updateLead(id, updates);
       setLead(updated);
     } catch (e) {
       console.error(e);
@@ -138,6 +184,14 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
+    <>
+    {showPicker && (
+      <DocumentPicker
+        leadId={id}
+        onLinked={fetchLinkedDocs}
+        onClose={() => setShowPicker(false)}
+      />
+    )}
     <div className="flex flex-col flex-1 overflow-hidden">
       <Header title="Lead Detail" />
       <main className="flex-1 overflow-hidden p-6">
@@ -180,7 +234,22 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                 </div>
                 <div className="flex items-center gap-2.5 text-xs">
                   <User className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                  <span className="text-gray-700 dark:text-gray-300">{lead.assigned_to ?? "Unassigned"}</span>
+                  {isAgent ? (
+                    <span className="text-gray-700 dark:text-gray-300">
+                      {assignedTo ?? "Unassigned"}
+                    </span>
+                  ) : (
+                    <select
+                      value={assignedTo ?? ""}
+                      onChange={(e) => setAssignedTo(e.target.value || null)}
+                      className="flex-1 bg-transparent text-gray-700 dark:text-gray-300 outline-none cursor-pointer"
+                    >
+                      <option value="">Unassigned</option>
+                      {teamMembers.map((m) => (
+                        <option key={m.id} value={m.name}>{m.name}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </div>
 
@@ -214,12 +283,87 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as LeadStatus)}
-                className="w-full text-xs px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 outline-none cursor-pointer"
+                disabled={!canEditDetails}
+                className="w-full text-xs px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {statusOptions.map((s) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>
+            </div>
+
+            {/* Documents */}
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-3.5 h-3.5 text-gray-400" />
+                  <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Quotations & Invoices</h3>
+                </div>
+                <button
+                  onClick={() => setShowPicker(true)}
+                  className="flex items-center gap-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors"
+                >
+                  <Plus className="w-3 h-3" /> Link
+                </button>
+              </div>
+
+              {linkedDocs.length === 0 ? (
+                <button
+                  onClick={() => setShowPicker(true)}
+                  className="w-full flex flex-col items-center justify-center py-5 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors group"
+                >
+                  <FileText className="w-6 h-6 text-gray-300 dark:text-gray-600 group-hover:text-indigo-400 transition-colors mb-1.5" />
+                  <span className="text-xs text-gray-400 dark:text-gray-500">Link a quotation or invoice</span>
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  {linkedDocs.map((doc) => (
+                    <div key={doc.id} className="flex items-start gap-2.5 p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 group">
+                      <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center shrink-0">
+                        {doc.doc_type === "invoice"
+                          ? <Receipt className="w-3.5 h-3.5 text-indigo-500" />
+                          : <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
+                            {doc.doc_number || "No number"}
+                          </span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ${doc.doc_type === "invoice" ? "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400" : "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"}`}>
+                            {doc.doc_type}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                          {doc.customer_name && `${doc.customer_name} · `}
+                          {doc.currency} {parseFloat(doc.amount ?? 0).toLocaleString("en-MY", { minimumFractionDigits: 2 })}
+                        </p>
+                        <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 capitalize">
+                          {doc.provider === "manual" ? "Manual" : doc.provider?.replace(/_/g, " ")} {doc.status ? `· ${doc.status}` : ""}
+                        </p>
+                        {doc.doc_url && (
+                          <a
+                            href={doc.doc_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-[10px] text-indigo-500 hover:underline mt-0.5"
+                          >
+                            <ExternalLink className="w-2.5 h-2.5" /> View file
+                          </a>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleUnlink(doc.id)}
+                        disabled={unlinkingId === doc.id}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
+                      >
+                        {unlinkingId === doc.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Notes */}
@@ -231,14 +375,15 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full text-xs px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 outline-none resize-none focus:border-violet-300 dark:focus:border-violet-700 transition-colors"
+                disabled={!canEditDetails}
+                className="w-full text-xs px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 outline-none resize-none focus:border-violet-300 dark:focus:border-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 rows={4}
-                placeholder="Add notes about this lead..."
+                placeholder={canEditDetails ? "Add notes about this lead..." : "Not assigned to you"}
               />
               <button
                 onClick={handleSaveStatus}
-                disabled={saving}
-                className="mt-2 w-full py-2 text-xs font-medium bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                disabled={saving || !canEditDetails}
+                className="mt-2 w-full py-2 text-xs font-medium bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
               >
                 {saving && <Loader2 className="w-3 h-3 animate-spin" />}
                 Save Changes
@@ -322,5 +467,6 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
         </div>
       </main>
     </div>
+    </>
   );
 }
