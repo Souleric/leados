@@ -3,7 +3,7 @@
 import { Header } from "@/components/layout/header";
 import { CampaignChart } from "@/components/charts/campaign-chart";
 import { useState, useEffect, useCallback } from "react";
-import { TrendingUp, DollarSign, Users, Target, RefreshCw, Loader2, BarChart2, ExternalLink } from "lucide-react";
+import { TrendingUp, DollarSign, Users, Target, RefreshCw, Loader2, BarChart2, ExternalLink, Download } from "lucide-react";
 
 const platformColors: Record<string, string> = {
   Facebook:  "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
@@ -56,6 +56,7 @@ export default function CampaignsPage() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [exportingId, setExportingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -86,6 +87,30 @@ export default function CampaignsPage() {
       setSyncMsg({ type: "err", text: e.message ?? "Sync failed" });
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleExport = async (campaignId?: string) => {
+    const key = campaignId ?? "all";
+    setExportingId(key);
+    try {
+      const url = "/api/campaigns/leads-export" + (campaignId ? `?campaign_id=${campaignId}` : "");
+      const res = await fetch(url);
+      if (!res.ok) {
+        const err = await res.json();
+        setSyncMsg({ type: "err", text: err.error ?? "Export failed" });
+        return;
+      }
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = res.headers.get("Content-Disposition")?.match(/filename="(.+)"/)?.[1] ?? "leads.csv";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      setSyncMsg({ type: "err", text: "Export failed" });
+    } finally {
+      setExportingId(null);
     }
   };
 
@@ -121,14 +146,26 @@ export default function CampaignsPage() {
               )}
             </p>
           </div>
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
-          >
-            {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-            {syncing ? "Syncing..." : "Sync from Meta"}
-          </button>
+          <div className="flex items-center gap-2">
+            {campaigns[0]?.meta_campaign_id !== "demo" && (
+              <button
+                onClick={() => handleExport()}
+                disabled={exportingId === "all"}
+                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/[0.04] border border-[#E2E6EF] dark:border-white/[0.08] hover:border-[#1E6FEB]/40 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl transition-colors disabled:opacity-60"
+              >
+                {exportingId === "all" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                Download All Leads
+              </button>
+            )}
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className="flex items-center gap-2 px-4 py-2 bg-[#1E6FEB] hover:bg-[#1a63d4] disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
+            >
+              {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              {syncing ? "Syncing..." : "Sync from Meta"}
+            </button>
+          </div>
         </div>
 
         {/* Sync message */}
@@ -204,7 +241,7 @@ export default function CampaignsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-100 dark:border-gray-800">
-                    {["Campaign", "Platform", "Status", "Spend (RM)", "Leads", "Clicks", "CPL (RM)", "CPM (RM)", "CPC (RM)"].map((h) => (
+                    {["Campaign", "Platform", "Status", "Spend (RM)", "Leads", "Clicks", "CPL (RM)", "CPM (RM)", "CPC (RM)", ""].map((h) => (
                       <th key={h} className="text-left px-5 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider whitespace-nowrap">
                         {h}
                       </th>
@@ -260,6 +297,21 @@ export default function CampaignsPage() {
                         </td>
                         <td className="px-5 py-3.5 text-sm text-gray-700 dark:text-gray-300">
                           {fmt(c.cpc, "", 2)}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          {c.meta_campaign_id && c.meta_campaign_id !== "demo" && (
+                            <button
+                              onClick={() => handleExport(c.meta_campaign_id!)}
+                              disabled={exportingId === c.meta_campaign_id}
+                              title="Download leads CSV"
+                              className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-[#1E6FEB] border border-[#1E6FEB]/30 rounded-lg hover:bg-[#EBF2FF] dark:hover:bg-[#1E6FEB]/10 transition-colors disabled:opacity-50"
+                            >
+                              {exportingId === c.meta_campaign_id
+                                ? <Loader2 className="w-3 h-3 animate-spin" />
+                                : <Download className="w-3 h-3" />}
+                              CSV
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))
