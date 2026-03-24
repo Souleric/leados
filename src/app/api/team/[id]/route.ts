@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import bcrypt from "bcryptjs";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -26,14 +27,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const body = await request.json();
-    const { name, email, role, status } = body;
+    const { name, email, role, status, password } = body;
 
     const updates: Record<string, any> = {};
     if (name !== undefined) updates.name = name;
     if (email !== undefined) updates.email = email || null;
-    // Cannot change the master admin's role
     if (role !== undefined && !target?.is_master_admin) updates.role = role;
     if (status !== undefined) updates.status = status;
+    if (password !== undefined) {
+      if (password.length < 6) {
+        return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
+      }
+      updates.password_hash = await bcrypt.hash(password, 12);
+    }
 
     const { data, error } = await supabase
       .from("team_members")

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Trash2, Users, Loader2, Shield, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, Trash2, Users, Loader2, Shield, ToggleLeft, ToggleRight, KeyRound } from "lucide-react";
 
 const COLORS = [
   "#7c3aed", "#2563eb", "#059669", "#d97706", "#dc2626",
@@ -52,6 +52,10 @@ export function TeamSettingsTab() {
   const [togglingAutoAssign, setTogglingAutoAssign] = useState(false);
   const [bulkAssigning, setBulkAssigning] = useState(false);
   const [bulkMsg, setBulkMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [changingPwFor, setChangingPwFor] = useState<string | null>(null);
+  const [newPw, setNewPw] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwMsg, setPwMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -130,6 +134,28 @@ export function TeamSettingsTab() {
       setError(e.message ?? "Failed to add member");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const changePassword = async (id: string) => {
+    if (!newPw || newPw.length < 6) { setPwMsg({ type: "err", text: "Password must be at least 6 characters" }); return; }
+    setPwSaving(true);
+    setPwMsg(null);
+    try {
+      const res = await fetch(`/api/team/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: newPw }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      setPwMsg({ type: "ok", text: "Password updated" });
+      setNewPw("");
+      setTimeout(() => { setChangingPwFor(null); setPwMsg(null); }, 1500);
+    } catch (e: any) {
+      setPwMsg({ type: "err", text: e.message ?? "Failed" });
+    } finally {
+      setPwSaving(false);
     }
   };
 
@@ -251,11 +277,9 @@ export function TeamSettingsTab() {
         ) : (
           <div>
             {members.map((m, i) => (
+              <div key={m.id} className={i < members.length - 1 ? "border-b border-gray-50 dark:border-gray-800/50" : ""}>
               <div
-                key={m.id}
-                className={`flex items-center gap-3 px-5 py-3.5 ${
-                  i < members.length - 1 ? "border-b border-gray-50 dark:border-gray-800/50" : ""
-                } hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors group`}
+                className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors group"
               >
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
@@ -299,13 +323,53 @@ export function TeamSettingsTab() {
                   </span>
                 )}
                 {isAdmin && !m.is_master_admin && (
-                  <button
-                    onClick={() => removeMember(m.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 transition-all rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <button
+                      onClick={() => { setChangingPwFor(changingPwFor === m.id ? null : m.id); setNewPw(""); setPwMsg(null); }}
+                      className="p-1.5 text-gray-300 hover:text-blue-500 dark:text-gray-600 dark:hover:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/20"
+                      title="Change password"
+                    >
+                      <KeyRound className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => removeMember(m.id)}
+                      className="p-1.5 text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20"
+                      title="Remove member"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 )}
+              </div>
+              {/* Inline password change form */}
+              {changingPwFor === m.id && isAdmin && (
+                <div className="mx-5 mb-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-xl border border-blue-100 dark:border-blue-900/30">
+                  <p className="text-[11px] font-semibold text-blue-700 dark:text-blue-300 mb-2">Change password for {m.name}</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="password"
+                      value={newPw}
+                      onChange={(e) => setNewPw(e.target.value)}
+                      placeholder="New password (min 6 chars)"
+                      autoComplete="new-password"
+                      className="flex-1 text-xs px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:border-blue-300 dark:focus:border-blue-700 transition-colors"
+                    />
+                    <button
+                      onClick={() => changePassword(m.id)}
+                      disabled={pwSaving}
+                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-[#1E6FEB] text-white rounded-lg hover:bg-[#1a63d4] disabled:opacity-50 transition-colors whitespace-nowrap"
+                    >
+                      {pwSaving && <Loader2 className="w-3 h-3 animate-spin" />}
+                      Save
+                    </button>
+                  </div>
+                  {pwMsg && (
+                    <p className={`mt-1.5 text-[11px] ${pwMsg.type === "ok" ? "text-emerald-600" : "text-red-500"}`}>
+                      {pwMsg.text}
+                    </p>
+                  )}
+                </div>
+              )}
               </div>
             ))}
           </div>
