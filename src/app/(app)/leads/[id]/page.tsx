@@ -9,13 +9,27 @@ import Link from "next/link";
 import {
   Phone, Tag, ChevronLeft, MoreHorizontal,
   User, StickyNote, CheckCircle2, Loader2, FileText, Receipt, Plus, Trash2, ExternalLink,
-  Activity, MessageSquare, Instagram, Facebook, PhoneCall,
+  Activity, MessageSquare, Instagram, Facebook, PhoneCall, Mail, MapPin, Zap,
 } from "lucide-react";
 import { DocumentPicker } from "@/components/leads/document-picker";
 import { useState, useEffect } from "react";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
+}
+
+/** Extracts structured fields from the notes string written by the sheet sync */
+function parseLeadExtras(notes: string): { email: string; address: string; tnb: string; cleanNotes: string } {
+  let email = "", address = "", tnb = "";
+  const remaining: string[] = [];
+  for (const line of (notes ?? "").split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("Email:")) email = trimmed.replace("Email:", "").trim();
+    else if (trimmed.startsWith("Address:")) address = trimmed.replace("Address:", "").trim();
+    else if (trimmed.startsWith("Avg TNB Bill:")) tnb = trimmed.replace("Avg TNB Bill:", "").trim();
+    else remaining.push(line);
+  }
+  return { email, address, tnb, cleanNotes: remaining.join("\n").trim() };
 }
 
 const statusOptions: { value: LeadStatus; label: string }[] = [
@@ -50,7 +64,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
       .then((l) => {
         setLead(l);
         setStatus(l.status);
-        setNotes(l.notes ?? "");
+        setNotes(parseLeadExtras(l.notes ?? "").cleanNotes);
         setAssignedTo(l.assigned_to ?? null);
       })
       .catch(console.error)
@@ -94,7 +108,17 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     if (!lead) return;
     setSaving(true);
     try {
-      const updates: Partial<DbLead> = { status, notes };
+      // Re-attach structured fields (email/address/tnb) so they aren't lost on save
+      const { email, address, tnb } = parseLeadExtras(lead.notes ?? "");
+      const structuredLines = [
+        email ? `Email: ${email}` : "",
+        address ? `Address: ${address}` : "",
+        tnb ? `Avg TNB Bill: ${tnb}` : "",
+      ].filter(Boolean).join("\n");
+      const fullNotes = structuredLines
+        ? `${structuredLines}${notes.trim() ? `\n${notes.trim()}` : ""}`
+        : notes;
+      const updates: Partial<DbLead> = { status, notes: fullNotes };
       // Agents cannot reassign leads
       if (!isAgent) updates.assigned_to = assignedTo;
       const updated = await updateLead(id, updates);
@@ -221,6 +245,34 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                   )}
                 </div>
               </div>
+
+              {/* Extra info parsed from notes */}
+              {(() => {
+                const { email, address, tnb } = parseLeadExtras(lead.notes ?? "");
+                if (!email && !address && !tnb) return null;
+                return (
+                  <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-800 space-y-2.5">
+                    {email && (
+                      <div className="flex items-start gap-2.5 text-xs">
+                        <Mail className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
+                        <span className="text-gray-700 dark:text-gray-300 break-all">{email}</span>
+                      </div>
+                    )}
+                    {address && (
+                      <div className="flex items-start gap-2.5 text-xs">
+                        <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
+                        <span className="text-gray-700 dark:text-gray-300">{address}</span>
+                      </div>
+                    )}
+                    {tnb && (
+                      <div className="flex items-center gap-2.5 text-xs">
+                        <Zap className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                        <span className="text-gray-700 dark:text-gray-300">{tnb} <span className="text-gray-400">/month TNB</span></span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {lead.tags && lead.tags.length > 0 && (
                 <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-800">
