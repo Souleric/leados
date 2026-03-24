@@ -4,16 +4,11 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
 interface Kpis {
   totalLeads: number;
-  qualifiedLeads: number;
+  newLeads: number;
+  inProgress: number;
   closedWon: number;
-  conversionRate: number;
+  lost: number;
 }
-
-const STATUSES = [
-  { key: "closedWon",     label: "Closed Won",      color: "#6366f1" },
-  { key: "qualifiedLeads", label: "In Progress",    color: "#818cf8" },
-  { key: "new",           label: "New",             color: "#93c5fd" },
-];
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
@@ -30,13 +25,11 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 export function InquiryBreakdownChart({ kpis }: { kpis: Kpis }) {
-  const inProgress = kpis.qualifiedLeads - kpis.closedWon;
-  const newLeads = kpis.totalLeads - kpis.qualifiedLeads;
-
   const data = [
-    { name: "Closed Won", value: kpis.closedWon,  color: "#6366f1" },
-    { name: "In Progress", value: Math.max(0, inProgress), color: "#818cf8" },
-    { name: "New",         value: Math.max(0, newLeads),   color: "#93c5fd" },
+    { name: "Closed Won",  value: kpis.closedWon,  color: "#10B981" },
+    { name: "In Progress", value: kpis.inProgress,  color: "#1E6FEB" },
+    { name: "New",         value: kpis.newLeads,    color: "#6366f1" },
+    { name: "Lost",        value: kpis.lost,        color: "#94a3b8" },
   ].filter((d) => d.value > 0);
 
   const total = kpis.totalLeads;

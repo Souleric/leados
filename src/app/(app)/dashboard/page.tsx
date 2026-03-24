@@ -5,52 +5,53 @@ import { KpiCard } from "@/components/ui/kpi-card";
 import { LeadsOverTimeChart } from "@/components/charts/leads-over-time";
 import { LeadsBySourceChart } from "@/components/charts/leads-by-source";
 import { InquiryBreakdownChart } from "@/components/charts/inquiry-breakdown";
-import { fetchLeads } from "@/lib/api";
-import { DbLead } from "@/lib/supabase/types";
+import { SalesPerformanceChart } from "@/components/charts/sales-performance-chart";
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import {
-  Users, UserCheck, TrendingUp, DollarSign, MousePointerClick,
+  Inbox, Loader, CheckCircle, UserX,
 } from "lucide-react";
 
 interface Kpis {
   totalLeads: number;
-  qualifiedLeads: number;
+  newLeads: number;
+  inProgress: number;
   closedWon: number;
+  lost: number;
+  unassigned: number;
+  thisMonth: number;
+  lastMonth: number;
+  monthChange: number;
   conversionRate: number;
 }
 
-function statusLabel(status: string) {
-  return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function statusBadgeCls(status: string) {
-  if (status === "closed_won") return "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400";
-  if (status === "new") return "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400";
-  if (status === "lost") return "bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400";
-  return "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400";
+interface MemberStat {
+  name: string;
+  total: number;
+  closed_won: number;
+  in_progress: number;
 }
 
 export default function DashboardPage() {
-  const [kpis, setKpis] = useState<Kpis>({ totalLeads: 0, qualifiedLeads: 0, closedWon: 0, conversionRate: 0 });
+  const [kpis, setKpis] = useState<Kpis>({
+    totalLeads: 0, newLeads: 0, inProgress: 0, closedWon: 0, lost: 0,
+    unassigned: 0, thisMonth: 0, lastMonth: 0, monthChange: 0, conversionRate: 0,
+  });
   const [perDay, setPerDay] = useState<{ date: string; total: number; qualified: number }[]>([]);
   const [perSource, setPerSource] = useState<{ source: string; total: number }[]>([]);
-  const [recentLeads, setRecentLeads] = useState<DbLead[]>([]);
+  const [perMember, setPerMember] = useState<MemberStat[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const [analyticsRes, leadsRes] = await Promise.all([
-          fetch("/api/analytics").then((r) => r.json()).catch(() => null),
-          fetchLeads({ limit: 5 }),
-        ]);
-        if (analyticsRes?.kpis) {
-          setKpis(analyticsRes.kpis);
-          setPerDay(analyticsRes.perDay ?? []);
-          setPerSource(analyticsRes.perSource ?? []);
+        const res: Response = await fetch("/api/analytics");
+        const data = await res.json();
+        if (data?.kpis) {
+          setKpis(data.kpis);
+          setPerDay(data.perDay ?? []);
+          setPerSource(data.perSource ?? []);
+          setPerMember(data.perMember ?? []);
         }
-        setRecentLeads(leadsRes.leads.slice(0, 5));
       } catch (e) {
         console.error(e);
       } finally {
@@ -60,95 +61,45 @@ export default function DashboardPage() {
     load();
   }, []);
 
+  const fmt = (n: number) => loading ? "—" : String(n);
+
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       <Header title="Dashboard" />
 
       <main className="flex-1 overflow-y-auto px-7 pb-8 scrollbar-thin">
 
-        {/* ── Hero Banner ─────────────────────────────────────────── */}
-        <div className="hero-gradient hero-mesh relative rounded-3xl p-7 mb-6 overflow-hidden">
-          <div className="absolute right-0 top-0 w-[55%] h-full pointer-events-none select-none overflow-hidden rounded-3xl">
-            <svg viewBox="0 0 500 260" className="w-full h-full opacity-20" preserveAspectRatio="xMidYMid slice">
-              <defs>
-                <radialGradient id="g1" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="white" stopOpacity="0.6" />
-                  <stop offset="100%" stopColor="white" stopOpacity="0" />
-                </radialGradient>
-              </defs>
-              {Array.from({ length: 14 }).map((_, i) => (
-                <line key={`h${i}`} x1="0" y1={i * 20} x2="500" y2={i * 20} stroke="white" strokeWidth="0.5" />
-              ))}
-              {Array.from({ length: 26 }).map((_, i) => (
-                <line key={`v${i}`} x1={i * 20} y1="0" x2={i * 20} y2="260" stroke="white" strokeWidth="0.5" />
-              ))}
-              <circle cx="320" cy="90" r="110" fill="url(#g1)" />
-              <circle cx="420" cy="180" r="80" fill="url(#g1)" />
-              <circle cx="220" cy="40" r="60" fill="url(#g1)" />
-            </svg>
-          </div>
-
-          <div className="relative z-10">
-            <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-1">
-              Overview
-            </p>
-            <h2 className="text-white text-2xl font-bold tracking-tight mb-0.5">
-              {loading ? "—" : `${kpis.totalLeads} Total Leads`}
-            </h2>
-            <p className="text-white/60 text-xs mb-6">
-              {loading ? "Loading..." : `${kpis.closedWon} closed · ${kpis.conversionRate}% conversion rate`}
-            </p>
-
-            <div className="flex flex-wrap gap-3">
-              {[
-                { label: "Total Leads",  value: loading ? "—" : String(kpis.totalLeads) },
-                { label: "Qualified",    value: loading ? "—" : String(kpis.qualifiedLeads) },
-                { label: "Closed Won",   value: loading ? "—" : String(kpis.closedWon) },
-                { label: "Conv. Rate",   value: loading ? "—" : `${kpis.conversionRate}%` },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl px-4 py-3 min-w-[100px]"
-                >
-                  <p className="text-white text-base font-bold leading-none">{item.value}</p>
-                  <p className="text-white/60 text-[11px] mt-1">{item.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* ── KPI Cards ───────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 mt-6">
           <KpiCard
-            title="Total Leads"
-            value={loading ? "—" : String(kpis.totalLeads)}
-            change={0}
-            icon={Users}
+            title="New Leads"
+            value={fmt(kpis.newLeads)}
+            change={kpis.monthChange}
+            changeLabel={`${kpis.thisMonth} this month`}
+            icon={Inbox}
             iconColor="text-indigo-500"
             iconBg="bg-indigo-50 dark:bg-indigo-500/10"
           />
           <KpiCard
-            title="Qualified"
-            value={loading ? "—" : String(kpis.qualifiedLeads)}
-            change={0}
-            icon={UserCheck}
+            title="In Progress"
+            value={fmt(kpis.inProgress)}
+            icon={Loader}
             iconColor="text-blue-500"
             iconBg="bg-blue-50 dark:bg-blue-500/10"
           />
           <KpiCard
-            title="Conv. Rate"
-            value={loading ? "—" : `${kpis.conversionRate}%`}
-            change={0}
-            icon={TrendingUp}
+            title="Closed Won"
+            value={fmt(kpis.closedWon)}
+            change={kpis.totalLeads > 0 ? kpis.conversionRate : undefined}
+            changeLabel="conversion rate"
+            icon={CheckCircle}
             iconColor="text-emerald-500"
             iconBg="bg-emerald-50 dark:bg-emerald-500/10"
           />
           <KpiCard
-            title="Closed Won"
-            value={loading ? "—" : String(kpis.closedWon)}
-            change={0}
-            icon={DollarSign}
+            title="Unassigned"
+            value={fmt(kpis.unassigned)}
+            icon={UserX}
             iconColor="text-amber-500"
             iconBg="bg-amber-50 dark:bg-amber-500/10"
           />
@@ -165,62 +116,9 @@ export default function DashboardPage() {
         {/* ── Chart Row 2 ─────────────────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <LeadsBySourceChart data={perSource} />
-
-          {/* Recent Activity */}
-          <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] p-5">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h3 className="text-sm font-bold text-slate-800 dark:text-white">Recent Leads</h3>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Latest additions</p>
-              </div>
-              <Link href="/leads" className="text-xs font-medium text-indigo-500 hover:text-indigo-600 transition-colors">
-                View all
-              </Link>
-            </div>
-            {loading ? (
-              <div className="space-y-3">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/[0.05] animate-pulse shrink-0" />
-                    <div className="flex-1 space-y-1.5">
-                      <div className="h-3 bg-slate-100 dark:bg-white/[0.05] rounded animate-pulse w-32" />
-                      <div className="h-2.5 bg-slate-100 dark:bg-white/[0.05] rounded animate-pulse w-20" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : recentLeads.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 gap-2">
-                <Users className="w-8 h-8 text-slate-200 dark:text-slate-700" />
-                <p className="text-xs text-slate-400 dark:text-slate-500">No leads yet</p>
-                <Link href="/leads" className="text-xs font-medium text-indigo-500 hover:text-indigo-600">
-                  Add your first lead →
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {recentLeads.map((lead) => (
-                  <Link key={lead.id} href={`/leads/${lead.id}`} className="flex items-center gap-3 group">
-                    <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center shrink-0">
-                      <span className="text-[10px] font-bold text-indigo-500 dark:text-indigo-400">
-                        {lead.name ? lead.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() : lead.phone.slice(-2)}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                        {lead.name ?? "Unknown"}
-                      </p>
-                      <p className="text-[11px] text-slate-400 dark:text-slate-500">{lead.source ?? "—"} · {lead.phone}</p>
-                    </div>
-                    <span className={`text-[10px] px-2 py-1 rounded-lg font-semibold shrink-0 ${statusBadgeCls(lead.status)}`}>
-                      {statusLabel(lead.status)}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+          <SalesPerformanceChart data={perMember} />
         </div>
+
       </main>
     </div>
   );
