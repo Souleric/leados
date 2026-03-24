@@ -21,6 +21,10 @@ create table if not exists public.workspaces (
   meta_phone_display        text,                            -- "+601X-XXXXXXX"
   meta_business_name        text,
 
+  -- Meta Ads credentials
+  meta_ad_account_id        text,
+  meta_ads_access_token     text,
+
   -- Connection state
   meta_connected            boolean default false,
   meta_connected_at         timestamptz,

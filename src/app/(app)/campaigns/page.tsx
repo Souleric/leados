@@ -199,7 +199,7 @@ export default function CampaignsPage() {
         {/* Chart */}
         {campaigns.length > 0 && (
           <div className="mb-6">
-            <CampaignChart />
+            <CampaignChart campaigns={campaigns} />
           </div>
         )}
 

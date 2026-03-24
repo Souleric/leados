@@ -4,7 +4,14 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { campaigns } from "@/lib/mock-data";
+
+interface CampaignChartProps {
+  campaigns: Array<{
+    name: string;
+    leads_count: number;
+    clicks: number;
+  }>;
+}
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -24,13 +31,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-const chartData = campaigns.map((c) => ({
-  name: c.name.length > 18 ? c.name.slice(0, 18) + "…" : c.name,
-  Leads: c.leadsGenerated,
-  Conversions: c.conversions,
-}));
-
-export function CampaignChart() {
+export function CampaignChart({ campaigns }: CampaignChartProps) {
+  const chartData = campaigns.map((c) => ({
+    name: c.name.length > 18 ? c.name.slice(0, 18) + "…" : c.name,
+    Leads: c.leads_count,
+    Clicks: c.clicks,
+  }));
   return (
     <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] p-5">
       <div className="flex items-center justify-between mb-5">
@@ -61,7 +67,7 @@ export function CampaignChart() {
           <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(99,102,241,0.05)", radius: 8 }} />
           <Legend wrapperStyle={{ fontSize: "11px" }} iconType="circle" iconSize={6} />
           <Bar dataKey="Leads" fill="#6366f1" radius={[6, 6, 0, 0]} maxBarSize={28} />
-          <Bar dataKey="Conversions" fill="#93c5fd" radius={[6, 6, 0, 0]} maxBarSize={28} />
+          <Bar dataKey="Clicks" fill="#93c5fd" radius={[6, 6, 0, 0]} maxBarSize={28} />
         </BarChart>
       </ResponsiveContainer>
     </div>
