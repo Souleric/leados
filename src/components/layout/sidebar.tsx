@@ -83,7 +83,7 @@ export function Sidebar() {
       <nav className="flex-1 px-3 py-2 overflow-y-auto scrollbar-thin space-y-4">
         {navGroups.map((group) => (
           <div key={group.label}>
-            <p className="px-3 mb-1.5 text-[10px] font-semibold tracking-widest text-[#3A5070] uppercase">
+            <p className="px-3 mb-1.5 text-[10px] font-semibold tracking-widest text-[#506A8A] uppercase">
               {group.label}
             </p>
             <div className="space-y-0.5">
@@ -97,13 +97,13 @@ export function Sidebar() {
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150",
                       isActive
                         ? "bg-[#1E6FEB]/20 text-white font-semibold border border-[#1E6FEB]/30"
-                        : "text-[#8A9BB5] hover:bg-[#162038] hover:text-[#C8D0E0] font-medium"
+                        : "text-[#A8B8D0] hover:bg-[#162038] hover:text-white font-medium"
                     )}
                   >
                     <Icon
                       className={cn(
                         "w-[18px] h-[18px] shrink-0",
-                        isActive ? "text-[#1E6FEB]" : "text-[#4A6080]"
+                        isActive ? "text-[#1E6FEB]" : "text-[#6A85A8]"
                       )}
                       strokeWidth={isActive ? 2.5 : 2}
                     />
@@ -127,10 +127,10 @@ export function Sidebar() {
             "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
             pathname === "/settings"
               ? "bg-[#1E6FEB]/20 text-white border border-[#1E6FEB]/30"
-              : "text-[#8A9BB5] hover:bg-[#162038] hover:text-[#C8D0E0]"
+              : "text-[#A8B8D0] hover:bg-[#162038] hover:text-white"
           )}
         >
-          <Settings className="w-[18px] h-[18px] shrink-0 text-[#4A6080]" strokeWidth={2} />
+          <Settings className="w-[18px] h-[18px] shrink-0 text-[#6A85A8]" strokeWidth={2} />
           Settings
         </Link>
 
