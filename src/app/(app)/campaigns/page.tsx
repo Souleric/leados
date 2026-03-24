@@ -37,6 +37,15 @@ interface Campaign {
   meta_campaign_id: string | null;
 }
 
+const DEMO_CAMPAIGNS: Campaign[] = [
+  { id: "d1", name: "Roofing Campaign March",   platform: "Facebook",  status: "active", spend: 3200,  impressions: 85000,  clicks: 1240, leads_count: 45, cpl: 71.11,  cpm: 37.65,  cpc: 2.58,  start_date: "2024-03-01", end_date: "2024-03-31", last_synced_at: new Date().toISOString(), meta_campaign_id: "demo" },
+  { id: "d2", name: "Acrylic Bulk Promo",       platform: "Facebook",  status: "ended",  spend: 1800,  impressions: 52000,  clicks: 890,  leads_count: 38, cpl: 47.37,  cpm: 34.62,  cpc: 2.02,  start_date: "2024-03-01", end_date: "2024-03-15", last_synced_at: new Date().toISOString(), meta_campaign_id: "demo" },
+  { id: "d3", name: "Waterproofing Solutions",  platform: "Instagram", status: "active", spend: 2500,  impressions: 48000,  clicks: 760,  leads_count: 29, cpl: 86.21,  cpm: 52.08,  cpc: 3.29,  start_date: "2024-03-05", end_date: "2024-03-31", last_synced_at: new Date().toISOString(), meta_campaign_id: "demo" },
+  { id: "d4", name: "Home Renovation Q1",       platform: "TikTok",   status: "active", spend: 4100,  impressions: 120000, clicks: 2300, leads_count: 72, cpl: 56.94,  cpm: 34.17,  cpc: 1.78,  start_date: "2024-01-15", end_date: "2024-03-31", last_synced_at: new Date().toISOString(), meta_campaign_id: "demo" },
+  { id: "d5", name: "Factory Roofing B2B",      platform: "Facebook",  status: "active", spend: 5500,  impressions: 28000,  clicks: 420,  leads_count: 18, cpl: 305.56, cpm: 196.43, cpc: 13.10, start_date: "2024-02-01", end_date: "2024-03-31", last_synced_at: new Date().toISOString(), meta_campaign_id: "demo" },
+  { id: "d6", name: "Acrylic Signage IG",       platform: "Instagram", status: "paused", spend: 900,   impressions: 35000,  clicks: 580,  leads_count: 22, cpl: 40.91,  cpm: 25.71,  cpc: 1.55,  start_date: "2024-03-10", end_date: "2024-03-25", last_synced_at: new Date().toISOString(), meta_campaign_id: "demo" },
+];
+
 function fmt(n: number | null | undefined, prefix = "", decimals = 2) {
   if (n == null) return "—";
   return `${prefix}${n.toLocaleString("en-MY", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
@@ -53,9 +62,10 @@ export default function CampaignsPage() {
     try {
       const res = await fetch("/api/campaigns");
       const data = await res.json();
-      setCampaigns(data.campaigns ?? []);
+      const real = data.campaigns ?? [];
+      setCampaigns(real.length > 0 ? real : DEMO_CAMPAIGNS);
     } catch (e) {
-      console.error(e);
+      setCampaigns(DEMO_CAMPAIGNS);
     } finally {
       setLoading(false);
     }
@@ -101,7 +111,10 @@ export default function CampaignsPage() {
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">Campaigns</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               {loading ? "Loading..." : `${campaigns.length} campaigns`}
-              {lastSynced && (
+              {!loading && campaigns[0]?.meta_campaign_id === "demo" && (
+                <span className="ml-2 text-[11px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400 font-medium">demo data</span>
+              )}
+              {lastSynced && campaigns[0]?.meta_campaign_id !== "demo" && (
                 <span className="ml-2 text-[11px] text-gray-400">
                   · Last synced {new Date(lastSynced).toLocaleString("en-MY", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                 </span>
