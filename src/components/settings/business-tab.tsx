@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, CheckCircle2, Building2 } from "lucide-react";
+import { Loader2, CheckCircle2, Building2, Trash2, AlertTriangle } from "lucide-react";
 
 const TIMEZONES = [
   "Asia/Kuala_Lumpur",
@@ -21,6 +21,20 @@ export function BusinessSettingsTab() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const handleDeleteAllLeads = async () => {
+    setDeleting(true);
+    try {
+      await fetch("/api/leads/delete-all", { method: "DELETE" });
+      setConfirmDelete(false);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     fetch("/api/settings/workspace")
@@ -134,6 +148,46 @@ export function BusinessSettingsTab() {
               {saved ? "Saved!" : "Save Profile"}
             </button>
           </div>
+        </div>
+      </div>
+      {/* Danger Zone */}
+      <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-red-100 dark:border-red-900/30 overflow-hidden">
+        <div className="px-5 py-4 border-b border-red-100 dark:border-red-900/30 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-red-500" />
+          <h3 className="text-sm font-semibold text-red-600 dark:text-red-400">Danger Zone</h3>
+        </div>
+        <div className="p-5 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Delete All Leads</p>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Permanently removes all leads and their data. Useful for demo resets.</p>
+          </div>
+          {confirmDelete ? (
+            <div className="flex items-center gap-2 shrink-0 ml-4">
+              <span className="text-xs text-red-500 font-medium">Sure?</span>
+              <button
+                onClick={handleDeleteAllLeads}
+                disabled={deleting}
+                className="px-3 py-1.5 text-xs font-semibold bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                Yes, delete all
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="px-3 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="shrink-0 ml-4 px-3 py-1.5 text-xs font-semibold text-red-600 border border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-1.5"
+            >
+              <Trash2 className="w-3 h-3" />
+              Delete All Leads
+            </button>
+          )}
         </div>
       </div>
     </div>
