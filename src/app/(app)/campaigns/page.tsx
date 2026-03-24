@@ -3,7 +3,7 @@
 import { Header } from "@/components/layout/header";
 import { CampaignChart } from "@/components/charts/campaign-chart";
 import { useState, useEffect, useCallback } from "react";
-import { TrendingUp, DollarSign, Users, Target, RefreshCw, Loader2, BarChart2, ExternalLink, Download } from "lucide-react";
+import { TrendingUp, DollarSign, Users, Target, RefreshCw, Loader2, BarChart2, ExternalLink, Download, Eye } from "lucide-react";
 
 const platformColors: Record<string, string> = {
   Facebook:  "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
@@ -24,8 +24,11 @@ interface Campaign {
   name: string;
   platform: string;
   status: string;
+  objective: string | null;
   spend: number;
   impressions: number;
+  reach: number;
+  frequency: number | null;
   clicks: number;
   leads_count: number;
   cpl: number | null;
@@ -36,6 +39,22 @@ interface Campaign {
   last_synced_at: string | null;
   meta_campaign_id: string | null;
 }
+
+const OBJECTIVE_LABELS: Record<string, string> = {
+  OUTCOME_LEADS:       "Lead Gen",
+  OUTCOME_TRAFFIC:     "Traffic",
+  OUTCOME_AWARENESS:   "Awareness",
+  OUTCOME_ENGAGEMENT:  "Engagement",
+  OUTCOME_SALES:       "Sales",
+  OUTCOME_APP_PROMOTION: "App Promo",
+  LEAD_GENERATION:     "Lead Gen",
+  LINK_CLICKS:         "Traffic",
+  BRAND_AWARENESS:     "Awareness",
+  REACH:               "Reach",
+  VIDEO_VIEWS:         "Video Views",
+  MESSAGES:            "Messages",
+  CONVERSIONS:         "Conversions",
+};
 
 
 function fmt(n: number | null | undefined, prefix = "", decimals = 2) {
@@ -108,6 +127,7 @@ export default function CampaignsPage() {
   const totalSpend   = campaigns.reduce((s, c) => s + (c.spend ?? 0), 0);
   const totalLeads   = campaigns.reduce((s, c) => s + (c.leads_count ?? 0), 0);
   const totalClicks  = campaigns.reduce((s, c) => s + (c.clicks ?? 0), 0);
+  const totalReach   = campaigns.reduce((s, c) => s + (c.reach ?? 0), 0);
   const avgCPL       = totalLeads > 0 ? totalSpend / totalLeads : null;
 
   const lastSynced   = campaigns
@@ -173,12 +193,13 @@ export default function CampaignsPage() {
         )}
 
         {/* KPIs */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
           {[
-            { label: "Total Spend",     value: fmt(totalSpend, "RM ", 2),   icon: DollarSign, color: "text-amber-600",  bg: "bg-amber-50 dark:bg-amber-950/40" },
-            { label: "Leads from Ads",  value: String(totalLeads),           icon: Users,      color: "text-violet-600", bg: "bg-violet-50 dark:bg-violet-950/40" },
-            { label: "Total Clicks",    value: totalClicks.toLocaleString(), icon: Target,     color: "text-emerald-600",bg: "bg-emerald-50 dark:bg-emerald-950/40" },
-            { label: "Avg Cost / Lead", value: fmt(avgCPL, "RM ", 2),        icon: TrendingUp, color: "text-blue-600",   bg: "bg-blue-50 dark:bg-blue-950/40" },
+            { label: "Total Spend",     value: fmt(totalSpend, "RM ", 2),        icon: DollarSign, color: "text-amber-600",   bg: "bg-amber-50 dark:bg-amber-950/40" },
+            { label: "Leads from Ads",  value: String(totalLeads),               icon: Users,      color: "text-violet-600",  bg: "bg-violet-50 dark:bg-violet-950/40" },
+            { label: "Total Reach",     value: totalReach.toLocaleString(),       icon: Eye,        color: "text-sky-600",     bg: "bg-sky-50 dark:bg-sky-950/40" },
+            { label: "Total Clicks",    value: totalClicks.toLocaleString(),      icon: Target,     color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/40" },
+            { label: "Avg Cost / Lead", value: fmt(avgCPL, "RM ", 2),            icon: TrendingUp, color: "text-blue-600",    bg: "bg-blue-50 dark:bg-blue-950/40" },
           ].map((kpi) => (
             <div key={kpi.label} className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] p-5">
               <div className="flex items-start justify-between">
@@ -229,7 +250,7 @@ export default function CampaignsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-100 dark:border-gray-800">
-                    {["Campaign", "Platform", "Status", "Spend (RM)", "Leads", "Clicks", "CPL (RM)", "CPM (RM)", "CPC (RM)", ""].map((h) => (
+                    {["Campaign", "Platform", "Status", "Spend (RM)", "Leads", "Reach", "Clicks", "Freq", "CPL (RM)", "CPM (RM)", "CPC (RM)", ""].map((h) => (
                       <th key={h} className="text-left px-5 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider whitespace-nowrap">
                         {h}
                       </th>
@@ -240,7 +261,7 @@ export default function CampaignsPage() {
                   {loading ? (
                     Array.from({ length: 4 }).map((_, i) => (
                       <tr key={i} className="border-b border-gray-50 dark:border-gray-800/50">
-                        {Array.from({ length: 9 }).map((_, j) => (
+                        {Array.from({ length: 11 }).map((_, j) => (
                           <td key={j} className="px-5 py-4">
                             <div className="h-3 bg-slate-100 dark:bg-white/[0.05] rounded animate-pulse w-16" />
                           </td>
@@ -252,11 +273,18 @@ export default function CampaignsPage() {
                       <tr key={c.id} className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors">
                         <td className="px-5 py-3.5 max-w-[220px]">
                           <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.name}</p>
-                          {c.start_date && (
-                            <p className="text-[11px] text-gray-400 mt-0.5">
-                              {c.start_date}{c.end_date ? ` → ${c.end_date}` : ""}
-                            </p>
-                          )}
+                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                            {c.objective && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400 font-medium">
+                                {OBJECTIVE_LABELS[c.objective] ?? c.objective}
+                              </span>
+                            )}
+                            {c.start_date && (
+                              <p className="text-[11px] text-gray-400">
+                                {c.start_date}{c.end_date ? ` → ${c.end_date}` : ""}
+                              </p>
+                            )}
+                          </div>
                         </td>
                         <td className="px-5 py-3.5">
                           <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${platformColors[c.platform] ?? platformColors.Other}`}>
@@ -275,7 +303,13 @@ export default function CampaignsPage() {
                           {c.leads_count ?? 0}
                         </td>
                         <td className="px-5 py-3.5 text-sm text-gray-700 dark:text-gray-300">
+                          {c.reach?.toLocaleString() ?? "—"}
+                        </td>
+                        <td className="px-5 py-3.5 text-sm text-gray-700 dark:text-gray-300">
                           {c.clicks?.toLocaleString() ?? "—"}
+                        </td>
+                        <td className="px-5 py-3.5 text-sm text-gray-700 dark:text-gray-300">
+                          {fmt(c.frequency, "", 2)}
                         </td>
                         <td className="px-5 py-3.5 text-sm text-gray-700 dark:text-gray-300">
                           {fmt(c.cpl, "", 2)}
