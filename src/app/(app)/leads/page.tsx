@@ -28,8 +28,17 @@ export default function LeadsPage() {
   const [showModal, setShowModal] = useState(false);
   const [showSheetModal, setShowSheetModal] = useState(false);
   const [sheetUrl, setSheetUrl] = useState("");
-  const [importing, setImporting] = useState(false);
-  const [importMsg, setImportMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [savedSheetUrl, setSavedSheetUrl] = useState("");
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [lastSynced, setLastSynced] = useState<string | null>(null);
+
+  // Load saved sheet URL from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("gsheet_url") ?? "";
+    setSavedSheetUrl(saved);
+    setSheetUrl(saved);
+  }, []);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<LeadStatus | "all">("all");
@@ -59,24 +68,32 @@ export default function LeadsPage() {
     return () => clearTimeout(timer);
   }, [load, search]);
 
-  const handleSheetImport = async () => {
-    if (!sheetUrl.trim() || importing) return;
-    setImporting(true);
-    setImportMsg(null);
+  const handleSaveUrl = () => {
+    const trimmed = sheetUrl.trim();
+    localStorage.setItem("gsheet_url", trimmed);
+    setSavedSheetUrl(trimmed);
+  };
+
+  const handleSheetSync = async () => {
+    const url = savedSheetUrl || sheetUrl.trim();
+    if (!url || syncing) return;
+    setSyncing(true);
+    setSyncMsg(null);
     try {
-      const res = await fetch("/api/leads/import-gsheet", {
+      const res = await fetch("/api/leads/sync-gsheet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: sheetUrl.trim() }),
+        body: JSON.stringify({ url }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Import failed");
-      setImportMsg({ type: "ok", text: data.message });
+      if (!res.ok) throw new Error(data.error ?? "Sync failed");
+      setSyncMsg({ type: "ok", text: data.message });
+      setLastSynced(new Date().toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit" }));
       await load();
     } catch (e: any) {
-      setImportMsg({ type: "err", text: e.message ?? "Import failed" });
+      setSyncMsg({ type: "err", text: e.message ?? "Sync failed" });
     } finally {
-      setImporting(false);
+      setSyncing(false);
     }
   };
 
@@ -88,51 +105,84 @@ export default function LeadsPage() {
         onCreated={load}
       />
 
-      {/* Google Sheet Import Modal */}
+      {/* Google Sheet Sync Modal */}
       {showSheetModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
                   <Sheet className="w-4 h-4 text-emerald-600" />
                 </div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Import from Google Sheet</h3>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Google Sheet Sync</h3>
               </div>
-              <button onClick={() => { setShowSheetModal(false); setImportMsg(null); setSheetUrl(""); }} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg">
+              <button onClick={() => { setShowSheetModal(false); setSyncMsg(null); }} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-              Paste a Google Sheets link. The sheet must be set to <strong>Anyone with the link can view</strong>.
-              Columns mapped: <code className="text-indigo-600">full_name</code>, <code className="text-indigo-600">phone</code>, <code className="text-indigo-600">email</code>, <code className="text-indigo-600">campaign_name</code>, <code className="text-indigo-600">platform</code>, <code className="text-indigo-600">address</code>, <code className="text-indigo-600">property_type</code>.
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+              Reads your sheet and creates new leads or updates existing ones. Sheet must be <strong>Anyone with link can view</strong>.
             </p>
 
-            <input
-              type="url"
-              value={sheetUrl}
-              onChange={(e) => setSheetUrl(e.target.value)}
-              placeholder="https://docs.google.com/spreadsheets/d/..."
-              className="w-full text-xs px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-300 placeholder:text-gray-400 outline-none focus:border-indigo-300 dark:focus:border-indigo-700 mb-3"
-            />
+            {/* Sheet URL input */}
+            <label className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5 block">Sheet URL</label>
+            <div className="flex gap-2 mb-1">
+              <input
+                type="url"
+                value={sheetUrl}
+                onChange={(e) => setSheetUrl(e.target.value)}
+                placeholder="https://docs.google.com/spreadsheets/d/..."
+                className="flex-1 text-xs px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-300 placeholder:text-gray-400 outline-none focus:border-emerald-300 dark:focus:border-emerald-700"
+              />
+              <button
+                onClick={handleSaveUrl}
+                disabled={!sheetUrl.trim() || sheetUrl.trim() === savedSheetUrl}
+                className="px-3 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-xl hover:bg-gray-200 disabled:opacity-40 transition-colors whitespace-nowrap"
+              >
+                Save URL
+              </button>
+            </div>
+            {savedSheetUrl && (
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mb-4">URL saved — sync will use this sheet</p>
+            )}
 
-            {importMsg && (
+            {/* Fields info */}
+            <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-800 p-3 mb-4">
+              <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">Columns read from sheet</p>
+              <div className="grid grid-cols-2 gap-1">
+                {[
+                  { label: "Name", col: "full_name" },
+                  { label: "Phone", col: "phone" },
+                  { label: "Email", col: "email" },
+                  { label: "Property type", col: "property_type" },
+                  { label: "TNB Bill", col: "average_tnb_bill_per_month" },
+                  { label: "Address", col: "address" },
+                ].map(({ label, col }) => (
+                  <div key={col} className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                    <span className="text-[11px] text-gray-600 dark:text-gray-400">{label} <span className="text-gray-400 dark:text-gray-500">({col})</span></span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {syncMsg && (
               <div className={`mb-3 px-3 py-2.5 rounded-xl text-xs font-medium ${
-                importMsg.type === "ok"
-                  ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
-                  : "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300"
+                syncMsg.type === "ok"
+                  ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-900/30"
+                  : "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300 border border-red-100 dark:border-red-900/30"
               }`}>
-                {importMsg.text}
+                {syncMsg.text}
               </div>
             )}
 
             <button
-              onClick={handleSheetImport}
-              disabled={!sheetUrl.trim() || importing}
+              onClick={handleSheetSync}
+              disabled={!(savedSheetUrl || sheetUrl.trim()) || syncing}
               className="w-full py-2.5 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl transition-colors flex items-center justify-center gap-2"
             >
-              {importing ? <><Loader2 className="w-4 h-4 animate-spin" /> Importing...</> : "Import Leads"}
+              {syncing ? <><Loader2 className="w-4 h-4 animate-spin" /> Syncing...</> : "Sync Now"}
             </button>
           </div>
         </div>
@@ -162,8 +212,9 @@ export default function LeadsPage() {
                 onClick={() => setShowSheetModal(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.06] hover:border-emerald-300 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-xl transition-colors"
               >
-                <Sheet className="w-4 h-4 text-emerald-600" />
-                Import Sheet
+                {syncing ? <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" /> : <Sheet className="w-4 h-4 text-emerald-600" />}
+                <span>Sync Sheet</span>
+                {lastSynced && <span className="text-[10px] text-slate-400">{lastSynced}</span>}
               </button>
               <button
                 onClick={() => setShowModal(true)}
