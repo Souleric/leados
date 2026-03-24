@@ -7,7 +7,7 @@ import { fetchLeads } from "@/lib/api";
 import { AddLeadModal } from "@/components/leads/add-lead-modal";
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
-import { Search, Filter, Plus, ChevronRight, Phone, Calendar, Users, RefreshCw } from "lucide-react";
+import { Search, Filter, Plus, ChevronRight, Phone, Calendar, Users, RefreshCw, Sheet, Loader2, X } from "lucide-react";
 
 const sourceOptions: LeadSource[] = ["Facebook", "Instagram", "TikTok", "Referral", "Website", "Walk-in"];
 const statusOptions: LeadStatus[] = ["new", "contacted", "quotation_sent", "closed_won", "lost"];
@@ -26,6 +26,10 @@ export default function LeadsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showSheetModal, setShowSheetModal] = useState(false);
+  const [sheetUrl, setSheetUrl] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<LeadStatus | "all">("all");
@@ -55,6 +59,27 @@ export default function LeadsPage() {
     return () => clearTimeout(timer);
   }, [load, search]);
 
+  const handleSheetImport = async () => {
+    if (!sheetUrl.trim() || importing) return;
+    setImporting(true);
+    setImportMsg(null);
+    try {
+      const res = await fetch("/api/leads/import-gsheet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: sheetUrl.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Import failed");
+      setImportMsg({ type: "ok", text: data.message });
+      await load();
+    } catch (e: any) {
+      setImportMsg({ type: "err", text: e.message ?? "Import failed" });
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <>
       <AddLeadModal
@@ -62,6 +87,56 @@ export default function LeadsPage() {
         onClose={() => setShowModal(false)}
         onCreated={load}
       />
+
+      {/* Google Sheet Import Modal */}
+      {showSheetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
+                  <Sheet className="w-4 h-4 text-emerald-600" />
+                </div>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Import from Google Sheet</h3>
+              </div>
+              <button onClick={() => { setShowSheetModal(false); setImportMsg(null); setSheetUrl(""); }} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              Paste a Google Sheets link. The sheet must be set to <strong>Anyone with the link can view</strong>.
+              Columns mapped: <code className="text-indigo-600">full_name</code>, <code className="text-indigo-600">phone</code>, <code className="text-indigo-600">email</code>, <code className="text-indigo-600">campaign_name</code>, <code className="text-indigo-600">platform</code>, <code className="text-indigo-600">address</code>, <code className="text-indigo-600">property_type</code>.
+            </p>
+
+            <input
+              type="url"
+              value={sheetUrl}
+              onChange={(e) => setSheetUrl(e.target.value)}
+              placeholder="https://docs.google.com/spreadsheets/d/..."
+              className="w-full text-xs px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-300 placeholder:text-gray-400 outline-none focus:border-indigo-300 dark:focus:border-indigo-700 mb-3"
+            />
+
+            {importMsg && (
+              <div className={`mb-3 px-3 py-2.5 rounded-xl text-xs font-medium ${
+                importMsg.type === "ok"
+                  ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300"
+                  : "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300"
+              }`}>
+                {importMsg.text}
+              </div>
+            )}
+
+            <button
+              onClick={handleSheetImport}
+              disabled={!sheetUrl.trim() || importing}
+              className="w-full py-2.5 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
+              {importing ? <><Loader2 className="w-4 h-4 animate-spin" /> Importing...</> : "Import Leads"}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header title="Leads" />
@@ -82,6 +157,13 @@ export default function LeadsPage() {
                 title="Refresh"
               >
                 <RefreshCw className={`w-4 h-4 text-slate-400 ${loading ? "animate-spin" : ""}`} />
+              </button>
+              <button
+                onClick={() => setShowSheetModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.06] hover:border-emerald-300 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-xl transition-colors"
+              >
+                <Sheet className="w-4 h-4 text-emerald-600" />
+                Import Sheet
               </button>
               <button
                 onClick={() => setShowModal(true)}
