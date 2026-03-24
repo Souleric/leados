@@ -75,7 +75,7 @@ export function Sidebar() {
         </div>
         <div>
           <span className="text-sm font-bold text-slate-800 dark:text-white tracking-tight">LeadOS</span>
-          <p className="text-[10px] text-slate-400 dark:text-[#4A6080] leading-none mt-0.5">WhatsApp CRM</p>
+          <p className="text-[10px] text-slate-400 dark:text-[#4A6080] leading-none mt-0.5">Sales CRM</p>
         </div>
       </div>
 
@@ -83,7 +83,7 @@ export function Sidebar() {
       <nav className="flex-1 px-3 py-2 overflow-y-auto scrollbar-thin space-y-4">
         {navGroups.map((group) => (
           <div key={group.label}>
-            <p className="px-3 mb-1.5 text-[10px] font-semibold tracking-widest text-slate-400 dark:text-[#506A8A] uppercase">
+            <p className="px-3 mb-1.5 text-[10px] font-semibold tracking-widest text-slate-500 dark:text-[#506A8A] uppercase">
               {group.label}
             </p>
             <div className="space-y-0.5">
@@ -97,13 +97,13 @@ export function Sidebar() {
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150",
                       isActive
                         ? "bg-[#EBF2FF] dark:bg-[#1E6FEB]/20 text-[#1E6FEB] dark:text-white font-semibold"
-                        : "text-slate-500 dark:text-[#A8B8D0] hover:bg-slate-50 dark:hover:bg-[#162038] hover:text-slate-800 dark:hover:text-white font-medium"
+                        : "text-slate-600 dark:text-[#A8B8D0] hover:bg-slate-100 dark:hover:bg-[#162038] hover:text-slate-900 dark:hover:text-white font-medium"
                     )}
                   >
                     <Icon
                       className={cn(
                         "w-[18px] h-[18px] shrink-0",
-                        isActive ? "text-[#1E6FEB]" : "text-slate-400 dark:text-[#6A85A8]"
+                        isActive ? "text-[#1E6FEB]" : "text-slate-500 dark:text-[#6A85A8]"
                       )}
                       strokeWidth={isActive ? 2.5 : 2}
                     />
