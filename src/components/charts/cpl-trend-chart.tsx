@@ -80,7 +80,7 @@ export function CPLTrendChart({ data }: CPLTrendChartProps) {
             type="monotone"
             dataKey="CPL (RM)"
             stroke="#1E6FEB"
-            strokeWidth={2}
+            strokeWidth={2.5}
             dot={{ r: 3, fill: "#1E6FEB" }}
             activeDot={{ r: 5 }}
           />
@@ -88,10 +88,10 @@ export function CPLTrendChart({ data }: CPLTrendChartProps) {
             yAxisId="leads"
             type="monotone"
             dataKey="Leads"
-            stroke="#6366f1"
-            strokeWidth={2}
+            stroke="#F97316"
+            strokeWidth={2.5}
             strokeDasharray="4 4"
-            dot={{ r: 3, fill: "#6366f1" }}
+            dot={{ r: 3, fill: "#F97316" }}
             activeDot={{ r: 5 }}
           />
         </LineChart>
