@@ -17,7 +17,7 @@ async function fetchAll(url: string): Promise<any[]> {
   const results: any[] = [];
   let next: string | null = url;
   while (next) {
-    const res = await fetch(next);
+    const res = await fetch(next as string);
     const json = await res.json();
     if (json.error) throw new Error(json.error.message);
     results.push(...(json.data ?? []));
