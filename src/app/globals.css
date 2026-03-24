@@ -48,93 +48,94 @@
 }
 
 :root {
-  /* Light mode — soft blue-lavender background, pure white cards */
-  --background: #ECEEFF;
-  --foreground: #0F1734;
+  /* Light mode — clean neutral background, white cards, financial style */
+  --background: #F2F4F8;
+  --foreground: #111827;
 
   --card: #FFFFFF;
-  --card-foreground: #0F1734;
+  --card-foreground: #111827;
 
   --popover: #FFFFFF;
-  --popover-foreground: #0F1734;
+  --popover-foreground: #111827;
 
-  --primary: #3D52F5;
+  --primary: #1E6FEB;
   --primary-foreground: #FFFFFF;
 
-  --secondary: #E2E5FF;
-  --secondary-foreground: #0F1734;
+  --secondary: #EDF0F7;
+  --secondary-foreground: #111827;
 
-  --muted: #E2E5FF;
-  --muted-foreground: #5C6A8A;
+  --muted: #EDF0F7;
+  --muted-foreground: #6B7897;
 
-  --accent: #E2E5FF;
-  --accent-foreground: #0F1734;
+  --accent: #EBF2FF;
+  --accent-foreground: #1E6FEB;
 
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: #D8DCFF;
-  --input: #E2E5FF;
-  --ring: #3D52F5;
+  --destructive: #EF4444;
+  --border: #E2E6EF;
+  --input: #EDF0F7;
+  --ring: #1E6FEB;
 
-  --chart-1: #3D52F5;
-  --chart-2: oklch(0.65 0.18 200);
+  --chart-1: #1E6FEB;
+  --chart-2: #EF4444;
   --chart-3: oklch(0.72 0.15 155);
   --chart-4: oklch(0.78 0.16 80);
   --chart-5: oklch(0.62 0.22 30);
 
-  --radius: 1rem;
+  --radius: 0.75rem;
 
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #0F1734;
-  --sidebar-primary: #3D52F5;
+  /* Sidebar — dark navy like Investio's top nav */
+  --sidebar: #0D1526;
+  --sidebar-foreground: #C8D0E0;
+  --sidebar-primary: #1E6FEB;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #E2E5FF;
-  --sidebar-accent-foreground: #0F1734;
-  --sidebar-border: #D8DCFF;
-  --sidebar-ring: #3D52F5;
+  --sidebar-accent: #162038;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #1C2D45;
+  --sidebar-ring: #1E6FEB;
 }
 
 .dark {
-  /* Dark mode — deep navy background, dark blue-gray cards */
-  --background: #0C0E1D;
-  --foreground: #EEF0FA;
+  /* Dark mode — deep charcoal background, dark cards */
+  --background: #0A0E1A;
+  --foreground: #E8EDF5;
 
-  --card: #181B2C;
-  --card-foreground: #EEF0FA;
+  --card: #111827;
+  --card-foreground: #E8EDF5;
 
-  --popover: #181B2C;
-  --popover-foreground: #EEF0FA;
+  --popover: #111827;
+  --popover-foreground: #E8EDF5;
 
-  --primary: #3D52F5;
+  --primary: #1E6FEB;
   --primary-foreground: #FFFFFF;
 
-  --secondary: #1E2238;
-  --secondary-foreground: #EEF0FA;
+  --secondary: #1A2235;
+  --secondary-foreground: #E8EDF5;
 
-  --muted: #1E2238;
-  --muted-foreground: #8B95B8;
+  --muted: #1A2235;
+  --muted-foreground: #7A8599;
 
-  --accent: #1E2238;
-  --accent-foreground: #EEF0FA;
+  --accent: #1A2235;
+  --accent-foreground: #E8EDF5;
 
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: #252840;
-  --input: #1E2238;
-  --ring: #3D52F5;
+  --destructive: #EF4444;
+  --border: #1F2D42;
+  --input: #1A2235;
+  --ring: #1E6FEB;
 
-  --chart-1: #3D52F5;
-  --chart-2: oklch(0.70 0.15 200);
+  --chart-1: #1E6FEB;
+  --chart-2: #EF4444;
   --chart-3: oklch(0.72 0.15 155);
   --chart-4: oklch(0.78 0.16 80);
   --chart-5: oklch(0.70 0.20 30);
 
-  --sidebar: #181B2C;
-  --sidebar-foreground: #EEF0FA;
-  --sidebar-primary: #3D52F5;
+  --sidebar: #0D1526;
+  --sidebar-foreground: #C8D0E0;
+  --sidebar-primary: #1E6FEB;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #1E2238;
-  --sidebar-accent-foreground: #EEF0FA;
-  --sidebar-border: #252840;
-  --sidebar-ring: #3D52F5;
+  --sidebar-accent: #162038;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #1C2D45;
+  --sidebar-ring: #1E6FEB;
 }
 
 @layer base {
@@ -153,12 +154,12 @@
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: oklch(0.88 0.01 250) transparent;
+    scrollbar-color: #1C2D45 transparent;
   }
   .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: oklch(0.88 0.01 250);
+    background-color: #1C2D45;
     border-radius: 9999px;
   }
 

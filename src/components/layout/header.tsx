@@ -9,51 +9,51 @@ export function Header({ title }: { title?: string }) {
   const [searchFocused, setSearchFocused] = useState(false);
 
   return (
-    <header className="h-[60px] px-7 flex items-center justify-between bg-transparent sticky top-0 z-20">
+    <header className="h-[60px] px-7 flex items-center justify-between bg-white dark:bg-[#111827] border-b border-[#E2E6EF] dark:border-[#1F2D42] sticky top-0 z-20 shadow-sm">
 
       {/* Left: page title */}
-      <h1 className="text-lg font-bold text-[#0F1734] dark:text-[#EEF0FA] tracking-tight">
+      <h1 className="text-base font-semibold text-[#111827] dark:text-[#E8EDF5] tracking-tight">
         {title ?? "Dashboard"}
       </h1>
 
       {/* Center: search */}
       <div
-        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border transition-all duration-200 bg-white dark:bg-[#181B2C] ${
+        className={`flex items-center gap-2 px-3.5 py-2 rounded-lg border transition-all duration-200 bg-[#F2F4F8] dark:bg-[#1A2235] ${
           searchFocused
-            ? "border-[#3D52F5]/40 dark:border-[#3D52F5]/50 shadow-sm w-72"
-            : "border-[#D8DCFF] dark:border-[#252840] w-52"
+            ? "border-[#1E6FEB]/40 shadow-sm w-72"
+            : "border-[#E2E6EF] dark:border-[#1F2D42] w-52"
         }`}
       >
-        <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+        <Search className="w-3.5 h-3.5 text-[#6B7897] shrink-0" />
         <input
           type="text"
           placeholder="Search..."
-          className="text-[13px] bg-transparent outline-none text-[#0F1734] dark:text-[#EEF0FA] placeholder:text-slate-400 dark:placeholder:text-[#8B95B8] w-full"
+          className="text-[13px] bg-transparent outline-none text-[#111827] dark:text-[#E8EDF5] placeholder:text-[#6B7897] w-full"
           onFocus={() => setSearchFocused(true)}
           onBlur={() => setSearchFocused(false)}
         />
-        <kbd className="text-[10px] text-slate-300 dark:text-[#3D52F5]/60 font-mono hidden sm:block">⌘K</kbd>
+        <kbd className="text-[10px] text-[#6B7897] font-mono hidden sm:block">⌘K</kbd>
       </div>
 
       {/* Right: icon actions */}
       <div className="flex items-center gap-1.5">
         <IconBtn>
-          <Mail className="w-[18px] h-[18px] text-[#5C6A8A] dark:text-[#8B95B8]" />
+          <Mail className="w-[18px] h-[18px] text-[#6B7897]" />
         </IconBtn>
 
         <IconBtn badge>
-          <Bell className="w-[18px] h-[18px] text-[#5C6A8A] dark:text-[#8B95B8]" />
+          <Bell className="w-[18px] h-[18px] text-[#6B7897]" />
         </IconBtn>
 
         <IconBtn onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
           {theme === "dark"
-            ? <Sun className="w-[18px] h-[18px] text-[#8B95B8]" />
-            : <Moon className="w-[18px] h-[18px] text-[#5C6A8A]" />
+            ? <Sun className="w-[18px] h-[18px] text-[#6B7897]" />
+            : <Moon className="w-[18px] h-[18px] text-[#6B7897]" />
           }
         </IconBtn>
 
         <IconBtn>
-          <Settings className="w-[18px] h-[18px] text-[#5C6A8A] dark:text-[#8B95B8]" />
+          <Settings className="w-[18px] h-[18px] text-[#6B7897]" />
         </IconBtn>
       </div>
     </header>
@@ -72,11 +72,11 @@ function IconBtn({
   return (
     <button
       onClick={onClick}
-      className="relative w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-[#181B2C] border border-[#D8DCFF] dark:border-[#252840] hover:border-[#3D52F5]/40 dark:hover:border-[#3D52F5]/50 hover:shadow-sm transition-all"
+      className="relative w-9 h-9 flex items-center justify-center rounded-lg bg-[#F2F4F8] dark:bg-[#1A2235] border border-[#E2E6EF] dark:border-[#1F2D42] hover:border-[#1E6FEB]/40 hover:bg-[#EBF2FF] dark:hover:bg-[#162038] hover:shadow-sm transition-all"
     >
       {children}
       {badge && (
-        <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#3D52F5]" />
+        <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#1E6FEB]" />
       )}
     </button>
   );
