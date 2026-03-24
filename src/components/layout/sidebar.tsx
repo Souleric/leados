@@ -11,9 +11,11 @@ import {
   Settings,
   LogOut,
   Zap,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { useSidebar } from "./sidebar-context";
 
 const navGroups = [
   {
@@ -48,6 +50,7 @@ interface AuthUser {
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { open, close } = useSidebar();
   const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
@@ -55,6 +58,9 @@ export function Sidebar() {
       .then((r) => r.ok ? r.json() : null)
       .then((d) => setUser(d?.user ?? null));
   }, []);
+
+  // Close sidebar on route change (mobile)
+  useEffect(() => { close(); }, [pathname]);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -65,18 +71,26 @@ export function Sidebar() {
     ? user.name.split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase()
     : "?";
 
-  return (
-    <aside className="flex flex-col h-screen w-[220px] shrink-0 bg-white dark:bg-[#0D1526] border-r border-[#E2E6EF] dark:border-[#1C2D45]">
-
+  const sidebarContent = (
+    <aside className="flex flex-col h-full w-[220px] bg-white dark:bg-[#0D1526] border-r border-[#E2E6EF] dark:border-[#1C2D45]">
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 py-5">
-        <div className="w-8 h-8 rounded-lg bg-[#1E6FEB] flex items-center justify-center shadow-sm shadow-blue-200 dark:shadow-blue-900/50">
-          <Zap className="w-4 h-4 text-white" strokeWidth={2.5} />
+      <div className="flex items-center justify-between px-5 py-5">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-[#1E6FEB] flex items-center justify-center shadow-sm shadow-blue-200 dark:shadow-blue-900/50">
+            <Zap className="w-4 h-4 text-white" strokeWidth={2.5} />
+          </div>
+          <div>
+            <span className="text-sm font-bold text-slate-800 dark:text-white tracking-tight">LeadOS</span>
+            <p className="text-[10px] text-slate-400 dark:text-[#4A6080] leading-none mt-0.5">Sales CRM</p>
+          </div>
         </div>
-        <div>
-          <span className="text-sm font-bold text-slate-800 dark:text-white tracking-tight">LeadOS</span>
-          <p className="text-[10px] text-slate-400 dark:text-[#4A6080] leading-none mt-0.5">Sales CRM</p>
-        </div>
+        {/* Close button — mobile only */}
+        <button
+          onClick={close}
+          className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Nav */}
@@ -119,7 +133,7 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Bottom — settings + user */}
+      {/* Bottom */}
       <div className="px-3 pb-4 space-y-0.5 border-t border-[#E2E6EF] dark:border-[#1C2D45] pt-3">
         <Link
           href="/settings"
@@ -127,14 +141,13 @@ export function Sidebar() {
             "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
             pathname === "/settings"
               ? "bg-[#EBF2FF] dark:bg-[#1E6FEB]/20 text-[#1E6FEB] dark:text-white"
-              : "text-slate-500 dark:text-[#A8B8D0] hover:bg-slate-50 dark:hover:bg-[#162038] hover:text-slate-800 dark:hover:text-white"
+              : "text-slate-600 dark:text-[#A8B8D0] hover:bg-slate-100 dark:hover:bg-[#162038] hover:text-slate-900 dark:hover:text-white"
           )}
         >
-          <Settings className="w-[18px] h-[18px] shrink-0 text-slate-400 dark:text-[#6A85A8]" strokeWidth={2} />
+          <Settings className="w-[18px] h-[18px] shrink-0 text-slate-500 dark:text-[#6A85A8]" strokeWidth={2} />
           Settings
         </Link>
 
-        {/* User profile + logout */}
         <div className="flex items-center gap-2.5 px-3 py-2.5 mt-1 rounded-lg hover:bg-slate-50 dark:hover:bg-[#162038] transition-all group">
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shrink-0">
             <span className="text-[10px] font-bold text-white">{initials}</span>
@@ -157,5 +170,29 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+  );
+
+  return (
+    <>
+      {/* Desktop: always visible */}
+      <div className="hidden lg:flex h-screen shrink-0">
+        {sidebarContent}
+      </div>
+
+      {/* Mobile: drawer overlay */}
+      {open && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={close}
+          />
+          {/* Drawer */}
+          <div className="relative z-10 h-full animate-in slide-in-from-left duration-200">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

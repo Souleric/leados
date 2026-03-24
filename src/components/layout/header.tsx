@@ -1,27 +1,38 @@
 "use client";
 
-import { Bell, Search, Moon, Sun, Mail, Settings } from "lucide-react";
+import { Bell, Search, Moon, Sun, Settings, Menu } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
+import { useSidebar } from "./sidebar-context";
 
 export function Header({ title }: { title?: string }) {
   const { theme, setTheme } = useTheme();
   const [searchFocused, setSearchFocused] = useState(false);
+  const { toggle } = useSidebar();
 
   return (
-    <header className="h-[60px] px-7 flex items-center justify-between bg-white dark:bg-[#111827] border-b border-[#E2E6EF] dark:border-[#1F2D42] sticky top-0 z-20 shadow-sm">
+    <header className="h-[60px] px-4 sm:px-7 flex items-center justify-between bg-white dark:bg-[#111827] border-b border-[#E2E6EF] dark:border-[#1F2D42] sticky top-0 z-20 shadow-sm gap-3">
 
-      {/* Left: page title */}
-      <h1 className="text-base font-semibold text-[#111827] dark:text-[#E8EDF5] tracking-tight">
-        {title ?? "Dashboard"}
-      </h1>
+      {/* Left: hamburger (mobile) + page title */}
+      <div className="flex items-center gap-3 min-w-0">
+        <button
+          onClick={toggle}
+          className="lg:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+          aria-label="Open menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <h1 className="text-base font-semibold text-[#111827] dark:text-[#E8EDF5] tracking-tight truncate">
+          {title ?? "Dashboard"}
+        </h1>
+      </div>
 
-      {/* Center: search */}
+      {/* Center: search — hidden on small mobile */}
       <div
-        className={`flex items-center gap-2 px-3.5 py-2 rounded-lg border transition-all duration-200 bg-[#F2F4F8] dark:bg-[#1A2235] ${
+        className={`hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-lg border transition-all duration-200 bg-[#F2F4F8] dark:bg-[#1A2235] ${
           searchFocused
-            ? "border-[#1E6FEB]/40 shadow-sm w-72"
-            : "border-[#E2E6EF] dark:border-[#1F2D42] w-52"
+            ? "border-[#1E6FEB]/40 shadow-sm w-64"
+            : "border-[#E2E6EF] dark:border-[#1F2D42] w-44"
         }`}
       >
         <Search className="w-3.5 h-3.5 text-[#6B7897] shrink-0" />
@@ -32,15 +43,11 @@ export function Header({ title }: { title?: string }) {
           onFocus={() => setSearchFocused(true)}
           onBlur={() => setSearchFocused(false)}
         />
-        <kbd className="text-[10px] text-[#6B7897] font-mono hidden sm:block">⌘K</kbd>
+        <kbd className="text-[10px] text-[#6B7897] font-mono hidden md:block">⌘K</kbd>
       </div>
 
       {/* Right: icon actions */}
-      <div className="flex items-center gap-1.5">
-        <IconBtn>
-          <Mail className="w-[18px] h-[18px] text-[#6B7897]" />
-        </IconBtn>
-
+      <div className="flex items-center gap-1 shrink-0">
         <IconBtn badge>
           <Bell className="w-[18px] h-[18px] text-[#6B7897]" />
         </IconBtn>
