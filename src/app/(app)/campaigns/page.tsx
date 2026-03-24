@@ -2,6 +2,8 @@
 
 import { Header } from "@/components/layout/header";
 import { CampaignChart } from "@/components/charts/campaign-chart";
+import { CPLTrendChart } from "@/components/charts/cpl-trend-chart";
+import { ReachFrequencyChart } from "@/components/charts/reach-frequency-chart";
 import { useState, useEffect, useCallback } from "react";
 import { TrendingUp, DollarSign, Users, Target, RefreshCw, Loader2, BarChart2, ExternalLink, Download, Eye } from "lucide-react";
 
@@ -64,6 +66,7 @@ function fmt(n: number | null | undefined, prefix = "", decimals = 2) {
 
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [trend, setTrend] = useState<{ week: string; spend: number; leads: number; cpl: number | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -72,9 +75,14 @@ export default function CampaignsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/campaigns");
-      const data = await res.json();
-      setCampaigns(data.campaigns ?? []);
+      const [campRes, trendRes] = await Promise.all([
+        fetch("/api/campaigns"),
+        fetch("/api/campaigns/trend"),
+      ]);
+      const campData = await campRes.json();
+      const trendData = await trendRes.json();
+      setCampaigns(campData.campaigns ?? []);
+      setTrend(trendData.trend ?? []);
     } catch (e) {
       setCampaigns([]);
     } finally {
@@ -217,10 +225,14 @@ export default function CampaignsPage() {
           ))}
         </div>
 
-        {/* Chart */}
+        {/* Charts */}
         {campaigns.length > 0 && (
-          <div className="mb-6">
-            <CampaignChart campaigns={campaigns} />
+          <div className="space-y-4 mb-6">
+            {trend.length > 0 && <CPLTrendChart data={trend} />}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <CampaignChart campaigns={campaigns} />
+              <ReachFrequencyChart campaigns={campaigns} />
+            </div>
           </div>
         )}
 
