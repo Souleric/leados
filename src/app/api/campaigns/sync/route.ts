@@ -84,7 +84,7 @@ export async function POST() {
       "lifetime_budget",
       "start_time",
       "stop_time",
-      "insights.date_preset(last_30d){spend,impressions,reach,frequency,clicks,cpl,cpm,cpc,actions}",
+      "insights.date_preset(last_30d){spend,impressions,reach,frequency,clicks,cpm,cpc,actions}",
     ].join(",");
 
     const url = `${META_API}/${adAccountId}/campaigns?fields=${encodeURIComponent(fields)}&limit=50&access_token=${accessToken}`;
