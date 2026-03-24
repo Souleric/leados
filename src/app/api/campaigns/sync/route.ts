@@ -79,11 +79,12 @@ export async function POST() {
       "id",
       "name",
       "status",
+      "objective",
       "daily_budget",
       "lifetime_budget",
       "start_time",
       "stop_time",
-      "insights.date_preset(last_30d){spend,impressions,clicks,cpl,cpm,cpc,actions}",
+      "insights.date_preset(last_30d){spend,impressions,reach,frequency,clicks,cpl,cpm,cpc,actions}",
     ].join(",");
 
     const url = `${META_API}/${adAccountId}/campaigns?fields=${encodeURIComponent(fields)}&limit=50&access_token=${accessToken}`;
@@ -107,6 +108,8 @@ export async function POST() {
       const insights = c.insights?.data?.[0] ?? {};
       const spend = parseFloat(insights.spend ?? "0");
       const impressions = parseInt(insights.impressions ?? "0", 10);
+      const reach = parseInt(insights.reach ?? "0", 10);
+      const frequency = parseFloat(insights.frequency ?? "0") || null;
       const clicks = parseInt(insights.clicks ?? "0", 10);
       const cpm = parseFloat(insights.cpm ?? "0") || null;
       const cpc = parseFloat(insights.cpc ?? "0") || null;
@@ -122,10 +125,13 @@ export async function POST() {
         workspace_id: workspaceId,
         meta_campaign_id: c.id,
         name: c.name,
+        objective: c.objective ?? null,
         platform: "Facebook", // default; user can change
         status: mapStatus(c.status),
         spend,
         impressions,
+        reach,
+        frequency,
         clicks,
         leads_count: leadsCount,
         cpl,

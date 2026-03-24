@@ -50,16 +50,28 @@ create table if not exists public.messages (
 -- CAMPAIGNS TABLE
 -- ============================================================
 create table if not exists public.campaigns (
-  id            uuid primary key default uuid_generate_v4(),
-  name          text not null,
-  platform      text default 'Facebook'
-                check (platform in ('Facebook','Instagram','TikTok','Google','Other')),
-  spend         numeric(10,2) default 0,
-  status        text default 'active'
-                check (status in ('active','paused','ended')),
-  start_date    date,
-  end_date      date,
-  created_at    timestamptz not null default now()
+  id                uuid primary key default uuid_generate_v4(),
+  name              text not null,
+  platform          text default 'Facebook'
+                    check (platform in ('Facebook','Instagram','Google','Other')),
+  objective         text,                        -- Meta campaign objective e.g. LEAD_GENERATION, TRAFFIC
+  status            text default 'active'
+                    check (status in ('active','paused','ended')),
+  spend             numeric(10,2) default 0,
+  impressions       integer default 0,
+  reach             integer default 0,           -- unique people who saw the ad
+  frequency         numeric(6,2),               -- avg times one person saw the ad
+  clicks            integer default 0,
+  leads_count       integer default 0,
+  cpl               numeric(10,2),              -- cost per lead
+  cpm               numeric(10,2),              -- cost per 1000 impressions
+  cpc               numeric(10,2),              -- cost per click
+  meta_campaign_id  text unique,
+  start_date        date,
+  end_date          date,
+  last_synced_at    timestamptz,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now()
 );
 
 -- ============================================================
