@@ -50,6 +50,8 @@ export function TeamSettingsTab() {
   const [error, setError] = useState("");
   const [autoAssign, setAutoAssign] = useState(false);
   const [togglingAutoAssign, setTogglingAutoAssign] = useState(false);
+  const [bulkAssigning, setBulkAssigning] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -84,6 +86,21 @@ export function TeamSettingsTab() {
       });
     } finally {
       setTogglingAutoAssign(false);
+    }
+  };
+
+  const bulkAssign = async () => {
+    setBulkAssigning(true);
+    setBulkMsg(null);
+    try {
+      const res = await fetch("/api/leads/bulk-assign", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      setBulkMsg({ type: "ok", text: data.message });
+    } catch (e: any) {
+      setBulkMsg({ type: "err", text: e.message ?? "Failed to assign leads" });
+    } finally {
+      setBulkAssigning(false);
     }
   };
 
@@ -323,6 +340,32 @@ export function TeamSettingsTab() {
               Auto-assign is ON — new leads from manual entry, Google Sheet sync, and Meta Ads will be equally distributed.
             </p>
           )}
+
+          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Assign Unassigned Leads Now</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Distribute all currently unassigned leads equally across sales persons</p>
+              </div>
+              <button
+                onClick={bulkAssign}
+                disabled={bulkAssigning}
+                className="shrink-0 ml-4 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-[#1E6FEB] text-white rounded-lg hover:bg-[#1a63d4] disabled:opacity-50 transition-colors"
+              >
+                {bulkAssigning && <Loader2 className="w-3 h-3 animate-spin" />}
+                {bulkAssigning ? "Assigning..." : "Assign Now"}
+              </button>
+            </div>
+            {bulkMsg && (
+              <p className={`mt-2 text-[11px] px-3 py-2 rounded-lg ${
+                bulkMsg.type === "ok"
+                  ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400"
+                  : "bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400"
+              }`}>
+                {bulkMsg.text}
+              </p>
+            )}
+          </div>
         </div>
       )}
 
