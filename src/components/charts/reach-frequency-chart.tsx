@@ -58,15 +58,13 @@ export function ReachFrequencyChart({ campaigns }: ReachFrequencyChartProps) {
         </p>
       </div>
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 50 }}>
+        <BarChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 20 }} barCategoryGap="40%">
           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
           <XAxis
             dataKey="name"
-            tick={{ fontSize: 9, fill: "#94a3b8" }}
+            tick={{ fontSize: 10, fill: "#94a3b8" }}
             axisLine={false}
             tickLine={false}
-            angle={-30}
-            textAnchor="end"
             interval={0}
           />
           <YAxis
@@ -76,7 +74,7 @@ export function ReachFrequencyChart({ campaigns }: ReachFrequencyChartProps) {
             tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
           />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(99,102,241,0.05)", radius: 8 }} />
-          <Legend wrapperStyle={{ fontSize: "11px" }} iconType="circle" iconSize={6} />
+          <Legend wrapperStyle={{ fontSize: "11px" }} iconType="circle" iconSize={6} verticalAlign="top" align="right" />
           <Bar dataKey="Impressions" fill="#CBD5E1" radius={[6, 6, 0, 0]} maxBarSize={32} />
           <Bar dataKey="Reach" fill="#F97316" radius={[6, 6, 0, 0]} maxBarSize={32} />
         </BarChart>

@@ -49,15 +49,13 @@ export function CampaignChart({ campaigns }: CampaignChartProps) {
         </button>
       </div>
       <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 50 }}>
+        <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 20 }} barCategoryGap="40%">
           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
           <XAxis
             dataKey="name"
-            tick={{ fontSize: 9, fill: "#94a3b8" }}
+            tick={{ fontSize: 10, fill: "#94a3b8" }}
             axisLine={false}
             tickLine={false}
-            angle={-30}
-            textAnchor="end"
             interval={0}
           />
           <YAxis
@@ -66,9 +64,9 @@ export function CampaignChart({ campaigns }: CampaignChartProps) {
             tickLine={false}
           />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(99,102,241,0.05)", radius: 8 }} />
-          <Legend wrapperStyle={{ fontSize: "11px" }} iconType="circle" iconSize={6} />
-          <Bar dataKey="Leads" fill="#1E6FEB" radius={[6, 6, 0, 0]} maxBarSize={28} />
-          <Bar dataKey="Clicks" fill="#10B981" radius={[6, 6, 0, 0]} maxBarSize={28} />
+          <Legend wrapperStyle={{ fontSize: "11px" }} iconType="circle" iconSize={6} verticalAlign="top" align="right" />
+          <Bar dataKey="Leads" fill="#1E6FEB" radius={[6, 6, 0, 0]} maxBarSize={36} />
+          <Bar dataKey="Clicks" fill="#10B981" radius={[6, 6, 0, 0]} maxBarSize={36} />
         </BarChart>
       </ResponsiveContainer>
     </div>
