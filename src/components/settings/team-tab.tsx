@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Trash2, Users, Loader2, Shield } from "lucide-react";
+import { Plus, Trash2, Users, Loader2, Shield, ToggleLeft, ToggleRight } from "lucide-react";
 
 const COLORS = [
   "#7c3aed", "#2563eb", "#059669", "#d97706", "#dc2626",
@@ -28,7 +28,7 @@ interface AuthUser {
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "Admin",
-  agent: "Agent",
+  agent: "Sales Person",
   viewer: "Viewer (read-only)",
 };
 
@@ -48,24 +48,44 @@ export function TeamSettingsTab() {
   const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [autoAssign, setAutoAssign] = useState(false);
+  const [togglingAutoAssign, setTogglingAutoAssign] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [teamRes, meRes] = await Promise.all([
+      const [teamRes, meRes, wsRes] = await Promise.all([
         fetch("/api/team"),
         fetch("/api/auth/me"),
+        fetch("/api/settings/workspace"),
       ]);
       const teamData = await teamRes.json();
       const meData = meRes.ok ? await meRes.json() : null;
+      const wsData = wsRes.ok ? await wsRes.json() : null;
       setMembers(teamData.members ?? []);
       setCurrentUser(meData?.user ?? null);
+      setAutoAssign(wsData?.workspace?.auto_assign_leads ?? false);
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const toggleAutoAssign = async () => {
+    const next = !autoAssign;
+    setAutoAssign(next);
+    setTogglingAutoAssign(true);
+    try {
+      await fetch("/api/settings/workspace", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ auto_assign_leads: next }),
+      });
+    } finally {
+      setTogglingAutoAssign(false);
+    }
+  };
 
   useEffect(() => { load(); }, [load]);
 
@@ -181,7 +201,7 @@ export function TeamSettingsTab() {
                 className="text-xs px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none text-gray-700 dark:text-gray-300 cursor-pointer"
               >
                 <option value="admin">Admin</option>
-                <option value="agent">Agent</option>
+                <option value="agent">Sales Person</option>
                 <option value="viewer">Viewer</option>
               </select>
             </div>
@@ -249,7 +269,7 @@ export function TeamSettingsTab() {
                     className="text-xs px-2.5 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 outline-none cursor-pointer hidden sm:block"
                   >
                     <option value="admin">Admin</option>
-                    <option value="agent">Agent</option>
+                    <option value="agent">Sales Person</option>
                     <option value="viewer">Viewer</option>
                   </select>
                 ) : (
@@ -275,6 +295,37 @@ export function TeamSettingsTab() {
         )}
       </div>
 
+      {/* Lead Assignment */}
+      {isAdmin && (
+        <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">Auto-Assign Leads</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                {autoAssign
+                  ? "New leads are equally distributed to sales persons (fewest leads first)"
+                  : "Admin manually assigns each lead to a sales person"}
+              </p>
+            </div>
+            <button
+              onClick={toggleAutoAssign}
+              disabled={togglingAutoAssign}
+              className="shrink-0 ml-4 disabled:opacity-50 transition-opacity"
+              title={autoAssign ? "Turn off auto-assign" : "Turn on auto-assign"}
+            >
+              {autoAssign
+                ? <ToggleRight className="w-9 h-9 text-[#1E6FEB]" />
+                : <ToggleLeft className="w-9 h-9 text-gray-300 dark:text-gray-600" />}
+            </button>
+          </div>
+          {autoAssign && (
+            <p className="mt-3 text-[11px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-3 py-2 rounded-lg">
+              Auto-assign is ON — new leads from manual entry, Google Sheet sync, and Meta Ads will be equally distributed.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Role legend */}
       <div className="bg-gray-50 dark:bg-gray-800/30 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
         <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Role Permissions</p>
@@ -282,7 +333,7 @@ export function TeamSettingsTab() {
           {[
             { role: "Master Admin", desc: "Full control — cannot be removed, can change password" },
             { role: "Admin",        desc: "Full access — settings, all leads, manage team" },
-            { role: "Agent",        desc: "Can only edit leads assigned to them" },
+            { role: "Sales Person",  desc: "Can only see and edit leads assigned to them" },
             { role: "Viewer",       desc: "Read-only access to dashboard and leads" },
           ].map(({ role, desc }) => (
             <div key={role} className="flex items-start gap-2 text-xs">

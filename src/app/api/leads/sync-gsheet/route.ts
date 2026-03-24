@@ -13,6 +13,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { getNextAssignee } from "@/lib/auto-assign";
 
 function extractCsvUrl(url: string): string | null {
   const m = url.match(/\/spreadsheets\/d\/([\w-]+)/);
@@ -137,7 +138,8 @@ export async function POST(req: NextRequest) {
           .eq("id", existing.id);
         updated++;
       } else {
-        // Create new lead
+        // Create new lead — auto-assign if enabled
+        const assignedTo = await getNextAssignee(workspaceId);
         const { error } = await supabase.from("leads").insert({
           workspace_id: workspaceId,
           phone,
@@ -146,6 +148,7 @@ export async function POST(req: NextRequest) {
           status: "new",
           notes,
           tags,
+          assigned_to: assignedTo,
         });
         if (error) { skipped++; } else { created++; }
       }

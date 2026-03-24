@@ -53,6 +53,8 @@ export async function PATCH(request: NextRequest) {
       "meta_phone_display", "meta_business_name",
       // Meta Ads
       "meta_ad_account_id", "meta_ads_access_token",
+      // Lead assignment
+      "auto_assign_leads",
     ];
 
     const updates: Record<string, unknown> = {};

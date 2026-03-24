@@ -4,12 +4,14 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth";
+import { getNextAssignee } from "@/lib/auto-assign";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const status = searchParams.get("status");       // filter by status
-  const source = searchParams.get("source");       // filter by source
-  const search = searchParams.get("q");            // search by name/phone
+  const status = searchParams.get("status");
+  const source = searchParams.get("source");
+  const search = searchParams.get("q");
   const page   = parseInt(searchParams.get("page") ?? "1");
   const limit  = parseInt(searchParams.get("limit") ?? "50");
   const from   = (page - 1) * limit;
@@ -17,6 +19,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabase = createAdminClient();
+    const authUser = await getAuthUser();
 
     let query = supabase
       .from("leads")
@@ -26,20 +29,18 @@ export async function GET(request: NextRequest) {
 
     if (status) query = query.eq("status", status);
     if (source) query = query.eq("source", source);
-    if (search) {
-      query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%`);
+    if (search) query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%`);
+
+    // Sales persons can only see their own assigned leads
+    if (authUser && authUser.role === "agent" && !authUser.is_master_admin) {
+      query = query.eq("assigned_to", authUser.name);
     }
 
     const { data, error, count } = await query;
 
     if (error) throw error;
 
-    return NextResponse.json({
-      leads: data,
-      total: count,
-      page,
-      limit,
-    });
+    return NextResponse.json({ leads: data, total: count, page, limit });
   } catch (err) {
     console.error("[GET /api/leads]", err);
     return NextResponse.json({ error: "Failed to fetch leads" }, { status: 500 });
@@ -62,6 +63,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "WORKSPACE_ID env var not set" }, { status: 500 });
     }
 
+    // Auto-assign if enabled and not already assigned
+    let assignedTo = body.assigned_to || null;
+    if (!assignedTo) {
+      assignedTo = await getNextAssignee(workspaceId);
+    }
+
     const { data, error } = await supabase
       .from("leads")
       .insert({
@@ -71,7 +78,7 @@ export async function POST(request: NextRequest) {
         source: source ?? "Manual",
         campaign: campaign || null,
         status: status ?? "new",
-        assigned_to: body.assigned_to || null,
+        assigned_to: assignedTo,
         notes: body.notes || null,
       })
       .select("*")

@@ -12,7 +12,7 @@ const COLORS = [
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "Admin",
-  agent: "Agent",
+  agent: "Sales Person",
   viewer: "Viewer",
 };
 
@@ -147,7 +147,7 @@ export default function TeamPage() {
             </div>
             <div className="text-center">
               <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">No team members yet</p>
-              <p className="text-xs text-slate-400 mt-1">Add your agents in Settings → Team</p>
+              <p className="text-xs text-slate-400 mt-1">Add your sales persons in Settings → Team</p>
             </div>
             <Link href="/settings?tab=team" className="text-xs font-medium text-indigo-500 hover:text-indigo-600">
               Go to Settings →
@@ -231,7 +231,7 @@ export default function TeamPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-800">
-                      {["#", "Agent", "Role", "Total Leads", "New", "Active", "Closed Won", "Lost", "Close Rate"].map((h) => (
+                      {["#", "Sales Person", "Role", "Total Leads", "New", "Active", "Closed Won", "Lost", "Close Rate"].map((h) => (
                         <th key={h} className="text-left px-5 py-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider whitespace-nowrap">
                           {h}
                         </th>
