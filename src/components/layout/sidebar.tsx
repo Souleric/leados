@@ -66,16 +66,16 @@ export function Sidebar() {
     : "?";
 
   return (
-    <aside className="flex flex-col h-screen w-[220px] shrink-0 bg-[#0D1526] border-r border-[#1C2D45]">
+    <aside className="flex flex-col h-screen w-[220px] shrink-0 bg-white dark:bg-[#0D1526] border-r border-[#E2E6EF] dark:border-[#1C2D45]">
 
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 py-5">
-        <div className="w-8 h-8 rounded-lg bg-[#1E6FEB] flex items-center justify-center shadow-sm shadow-blue-900/50">
+        <div className="w-8 h-8 rounded-lg bg-[#1E6FEB] flex items-center justify-center shadow-sm shadow-blue-200 dark:shadow-blue-900/50">
           <Zap className="w-4 h-4 text-white" strokeWidth={2.5} />
         </div>
         <div>
-          <span className="text-sm font-bold text-white tracking-tight">LeadOS</span>
-          <p className="text-[10px] text-[#4A6080] leading-none mt-0.5">WhatsApp CRM</p>
+          <span className="text-sm font-bold text-slate-800 dark:text-white tracking-tight">LeadOS</span>
+          <p className="text-[10px] text-slate-400 dark:text-[#4A6080] leading-none mt-0.5">WhatsApp CRM</p>
         </div>
       </div>
 
@@ -83,7 +83,7 @@ export function Sidebar() {
       <nav className="flex-1 px-3 py-2 overflow-y-auto scrollbar-thin space-y-4">
         {navGroups.map((group) => (
           <div key={group.label}>
-            <p className="px-3 mb-1.5 text-[10px] font-semibold tracking-widest text-[#506A8A] uppercase">
+            <p className="px-3 mb-1.5 text-[10px] font-semibold tracking-widest text-slate-400 dark:text-[#506A8A] uppercase">
               {group.label}
             </p>
             <div className="space-y-0.5">
@@ -96,14 +96,14 @@ export function Sidebar() {
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150",
                       isActive
-                        ? "bg-[#1E6FEB]/20 text-white font-semibold border border-[#1E6FEB]/30"
-                        : "text-[#A8B8D0] hover:bg-[#162038] hover:text-white font-medium"
+                        ? "bg-[#EBF2FF] dark:bg-[#1E6FEB]/20 text-[#1E6FEB] dark:text-white font-semibold"
+                        : "text-slate-500 dark:text-[#A8B8D0] hover:bg-slate-50 dark:hover:bg-[#162038] hover:text-slate-800 dark:hover:text-white font-medium"
                     )}
                   >
                     <Icon
                       className={cn(
                         "w-[18px] h-[18px] shrink-0",
-                        isActive ? "text-[#1E6FEB]" : "text-[#6A85A8]"
+                        isActive ? "text-[#1E6FEB]" : "text-slate-400 dark:text-[#6A85A8]"
                       )}
                       strokeWidth={isActive ? 2.5 : 2}
                     />
@@ -120,37 +120,37 @@ export function Sidebar() {
       </nav>
 
       {/* Bottom — settings + user */}
-      <div className="px-3 pb-4 space-y-0.5 border-t border-[#1C2D45] pt-3">
+      <div className="px-3 pb-4 space-y-0.5 border-t border-[#E2E6EF] dark:border-[#1C2D45] pt-3">
         <Link
           href="/settings"
           className={cn(
             "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
             pathname === "/settings"
-              ? "bg-[#1E6FEB]/20 text-white border border-[#1E6FEB]/30"
-              : "text-[#A8B8D0] hover:bg-[#162038] hover:text-white"
+              ? "bg-[#EBF2FF] dark:bg-[#1E6FEB]/20 text-[#1E6FEB] dark:text-white"
+              : "text-slate-500 dark:text-[#A8B8D0] hover:bg-slate-50 dark:hover:bg-[#162038] hover:text-slate-800 dark:hover:text-white"
           )}
         >
-          <Settings className="w-[18px] h-[18px] shrink-0 text-[#6A85A8]" strokeWidth={2} />
+          <Settings className="w-[18px] h-[18px] shrink-0 text-slate-400 dark:text-[#6A85A8]" strokeWidth={2} />
           Settings
         </Link>
 
         {/* User profile + logout */}
-        <div className="flex items-center gap-2.5 px-3 py-2.5 mt-1 rounded-lg hover:bg-[#162038] transition-all group">
+        <div className="flex items-center gap-2.5 px-3 py-2.5 mt-1 rounded-lg hover:bg-slate-50 dark:hover:bg-[#162038] transition-all group">
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shrink-0">
             <span className="text-[10px] font-bold text-white">{initials}</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-[#C8D0E0] truncate">
+            <p className="text-xs font-semibold text-slate-700 dark:text-[#C8D0E0] truncate">
               {user?.name ?? "Loading..."}
             </p>
-            <p className="text-[10px] text-[#4A6080] truncate">
+            <p className="text-[10px] text-slate-400 dark:text-[#4A6080] truncate">
               {user?.is_master_admin ? "Master Admin" : user?.role ?? ""}
             </p>
           </div>
           <button
             onClick={handleLogout}
             title="Sign out"
-            className="p-1 text-[#3A5070] hover:text-red-400 transition-colors rounded"
+            className="p-1 text-slate-300 dark:text-[#3A5070] hover:text-red-500 dark:hover:text-red-400 transition-colors rounded"
           >
             <LogOut className="w-3.5 h-3.5" />
           </button>
