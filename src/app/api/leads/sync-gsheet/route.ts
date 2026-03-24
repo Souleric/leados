@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
       // Check if lead already exists
       const { data: existing } = await supabase
         .from("leads")
-        .select("id, notes, tags")
+        .select("id, name, notes, tags")
         .eq("phone", phone)
         .eq("workspace_id", workspaceId)
         .single();
