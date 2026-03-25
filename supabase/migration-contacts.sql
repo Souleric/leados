@@ -45,7 +45,7 @@ ALTER TABLE leads ADD CONSTRAINT leads_lifecycle_stage_check
 
 -- 6. Insert default membership tier for existing workspace
 INSERT INTO membership_tiers (workspace_id, name, color, sort_order)
-VALUES ('4f27de89-0d1f-4ff0-bd6b-5a2463da0719', 'Basic Member', '#6366f1', 0)
+VALUES ('80d301e3-6f64-43d5-968b-d9bfdb08788f', 'Basic Member', '#6366f1', 0)
 ON CONFLICT DO NOTHING;
 
 -- Done!
