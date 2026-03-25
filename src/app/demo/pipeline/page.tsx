@@ -38,8 +38,10 @@ function ProposalAge({ sentAt }: { sentAt: string | null }) {
 function PipelineCard({ contact, onClick }: { contact: DemoContact; onClick: () => void }) {
   return (
     <div
+      draggable
+      onDragStart={(e) => e.dataTransfer.setData("contactId", contact.id)}
       onClick={onClick}
-      className="block bg-white dark:bg-[#1E2238] border border-slate-200 dark:border-[#252840] rounded-lg p-3.5 hover:shadow-sm hover:border-[#1E6FEB]/30 transition-all cursor-pointer group"
+      className="block bg-white dark:bg-[#1E2238] border border-slate-200 dark:border-[#252840] rounded-lg p-3.5 hover:shadow-sm hover:border-[#1E6FEB]/30 transition-all cursor-grab active:cursor-grabbing group"
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -71,16 +73,40 @@ function PipelineCard({ contact, onClick }: { contact: DemoContact; onClick: () 
 
 export default function DemoPipelinePage() {
   const [selected, setSelected] = useState<DemoContact | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<DemoStatus | null>(null);
 
-  const grouped: Record<DemoStatus, DemoContact[]> = {
+  const initialGrouped: Record<DemoStatus, DemoContact[]> = {
     new: [], contacted: [], proposal_sent: [], converted: [], inactive: [],
   };
   for (const c of DEMO_CONTACTS) {
-    grouped[c.status].push(c);
+    initialGrouped[c.status].push(c);
   }
+  const [columnContacts, setColumnContacts] = useState<Record<DemoStatus, DemoContact[]>>(initialGrouped);
 
-  const totalActive = grouped.new.length + grouped.contacted.length + grouped.proposal_sent.length;
-  const converted   = grouped.converted.length;
+  const handleDrop = (e: React.DragEvent, targetStatus: DemoStatus) => {
+    e.preventDefault();
+    const contactId = e.dataTransfer.getData("contactId");
+    setColumnContacts((prev) => {
+      const next = { ...prev };
+      let moved: DemoContact | undefined;
+      for (const s of Object.keys(next) as DemoStatus[]) {
+        const idx = next[s].findIndex((c) => c.id === contactId);
+        if (idx !== -1) {
+          [moved] = next[s].splice(idx, 1);
+          next[s] = [...next[s]];
+          break;
+        }
+      }
+      if (moved) {
+        next[targetStatus] = [...next[targetStatus], { ...moved, status: targetStatus }];
+      }
+      return { ...next };
+    });
+    setDragOverCol(null);
+  };
+
+  const totalActive = columnContacts.new.length + columnContacts.contacted.length + columnContacts.proposal_sent.length;
+  const converted   = columnContacts.converted.length;
 
   return (
     <>
@@ -110,7 +136,7 @@ export default function DemoPipelinePage() {
               </div>
             )}
             <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-500/10 rounded-lg border border-blue-100 dark:border-blue-500/20">
-              <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Demo mode — drag & drop disabled</p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Demo mode — status changes are not saved</p>
             </div>
           </div>
         </div>
@@ -124,18 +150,20 @@ export default function DemoPipelinePage() {
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sales Pipeline</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{totalActive} active · {converted} converted</p>
             </div>
-            <div className="px-3 py-1.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg text-xs text-amber-700 dark:text-amber-400 font-medium">
-              Demo — read only
-            </div>
           </div>
 
           <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin h-[calc(100%-5rem)]">
             {COLUMNS.map((col) => {
-              const colContacts = grouped[col.id] ?? [];
+              const colContacts = columnContacts[col.id] ?? [];
               return (
                 <div
                   key={col.id}
-                  className={`flex flex-col flex-shrink-0 w-64 rounded-lg border p-3 ${col.color}`}
+                  onDragOver={(e) => { e.preventDefault(); setDragOverCol(col.id); }}
+                  onDragLeave={() => setDragOverCol(null)}
+                  onDrop={(e) => handleDrop(e, col.id)}
+                  className={`flex flex-col flex-shrink-0 w-64 rounded-lg border p-3 transition-all ${col.color} ${
+                    dragOverCol === col.id ? "ring-2 ring-[#1E6FEB]/40" : ""
+                  }`}
                 >
                   <div className="flex items-center justify-between mb-3 px-0.5">
                     <div className="flex items-center gap-2">
