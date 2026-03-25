@@ -7,7 +7,7 @@ import { fetchLeads } from "@/lib/api";
 import { AddLeadModal } from "@/components/leads/add-lead-modal";
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
-import { Search, Filter, Plus, ChevronRight, Phone, Calendar, Users, RefreshCw, Sheet, Loader2, X, Trash2, Clock } from "lucide-react";
+import { Search, Filter, Plus, ChevronRight, Phone, Calendar, Users, RefreshCw, Sheet, Loader2, X, Clock } from "lucide-react";
 
 const sourceOptions: LeadSource[] = ["Facebook", "Instagram", "TikTok", "Referral", "Website", "Walk-in"];
 const statusOptions: LeadStatus[] = ["new", "contacted", "proposal_sent", "converted", "inactive"];
@@ -54,21 +54,7 @@ export default function ContactsPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [lastSynced, setLastSynced] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [lifecycleTab, setLifecycleTab] = useState<LifecycleStage | "all">("active_lead");
-
-  const handleDeleteLead = async (e: React.MouseEvent, id: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDeletingId(id);
-    try {
-      await fetch(`/api/leads/${id}`, { method: "DELETE" });
-      setLeads((prev) => prev.filter((l) => l.id !== id));
-      setTotal((prev) => prev - 1);
-    } finally {
-      setDeletingId(null);
-    }
-  };
 
   useEffect(() => {
     const saved = localStorage.getItem("gsheet_url") ?? "";
@@ -412,15 +398,7 @@ export default function ContactsPage() {
                             </div>
                           </td>
                           <td className="pr-4">
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={(e) => handleDeleteLead(e, lead.id)}
-                                disabled={deletingId === lead.id}
-                                className="p-1.5 text-slate-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 rounded-lg transition-colors"
-                                title="Delete contact"
-                              >
-                                {deletingId === lead.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                              </button>
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                               <Link href={`/leads/${lead.id}`}>
                                 <ChevronRight className="w-4 h-4 text-slate-400" />
                               </Link>

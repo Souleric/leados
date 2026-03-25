@@ -7,10 +7,11 @@ import { fetchLead, updateLead } from "@/lib/api";
 import type { DbLead, DbTeamMember, LeadStatus } from "@/lib/supabase/types";
 import Link from "next/link";
 import {
-  Phone, Tag, ChevronLeft, MoreHorizontal,
+  Phone, Tag, ChevronLeft,
   User, StickyNote, CheckCircle2, Loader2, FileText, Receipt, Plus, Trash2, ExternalLink,
   Activity, MessageSquare, Instagram, Facebook, PhoneCall, Mail, MapPin, Zap,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { DocumentPicker } from "@/components/leads/document-picker";
 import { useState, useEffect } from "react";
 
@@ -42,9 +43,11 @@ const statusOptions: { value: LeadStatus; label: string; group: string }[] = [
 
 export default function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
 
   const [lead, setLead] = useState<DbLead | null>(null);
   const [loadingLead, setLoadingLead] = useState(true);
+  const [deleting, setDeleting] = useState(false);
 
   const [status, setStatus] = useState<LeadStatus>("new");
   const [notes, setNotes] = useState("");
@@ -103,6 +106,17 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   const isAgent = !!(currentUser && !currentUser.is_master_admin && currentUser.role === "agent");
   // Agents can only edit details of leads assigned to them
   const canEditDetails = !isAgent || (lead?.assigned_to != null && lead.assigned_to === currentUser?.name);
+
+  const handleDelete = async () => {
+    if (!confirm("Delete this contact? This cannot be undone.")) return;
+    setDeleting(true);
+    try {
+      await fetch(`/api/leads/${id}`, { method: "DELETE" });
+      router.push("/leads");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleSaveStatus = async () => {
     if (!lead) return;
@@ -193,8 +207,13 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                     </p>
                   </div>
                 </div>
-                <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-                  <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="p-1.5 text-slate-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                  title="Delete contact"
+                >
+                  {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                 </button>
               </div>
 
