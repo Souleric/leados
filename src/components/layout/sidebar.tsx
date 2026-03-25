@@ -12,6 +12,8 @@ import {
   LogOut,
   Zap,
   X,
+  UserCircle2,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
@@ -25,17 +27,19 @@ const navGroups = [
     ],
   },
   {
-    label: "LEADS",
+    label: "CONTACTS",
     items: [
-      { href: "/leads",    label: "Leads",     icon: Users },
+      { href: "/leads",    label: "Contacts",  icon: Users },
       { href: "/pipeline", label: "Pipeline",  icon: KanbanSquare },
+      { href: "/clients",  label: "Clients",   icon: UserCircle2 },
     ],
   },
   {
     label: "GROWTH",
     items: [
-      { href: "/campaigns", label: "Campaigns", icon: Megaphone },
-      { href: "/team",      label: "Team",      icon: UserCheck },
+      { href: "/campaigns",       label: "Campaigns",       icon: Megaphone },
+      { href: "/team",            label: "Team",            icon: UserCheck },
+      { href: "/email-marketing", label: "Email Marketing", icon: Mail },
     ],
   },
 ];

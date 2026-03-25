@@ -3,7 +3,7 @@
 import { Header } from "@/components/layout/header";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Wifi, Building2, Users, Webhook, BarChart2, BookOpen, Plug, UserCircle } from "lucide-react";
+import { Wifi, Building2, Users, Webhook, BarChart2, BookOpen, Plug, UserCircle, Crown } from "lucide-react";
 import { WhatsAppSettingsTab } from "@/components/settings/whatsapp-tab";
 import { MetaAdsSettingsTab } from "@/components/settings/meta-ads-tab";
 import { BusinessSettingsTab } from "@/components/settings/business-tab";
@@ -12,17 +12,19 @@ import { WebhookSettingsTab } from "@/components/settings/webhook-tab";
 import { KnowledgeBaseTab } from "@/components/settings/knowledge-base-tab";
 import { IntegrationsTab } from "@/components/settings/integrations-tab";
 import { AccountTab } from "@/components/settings/account-tab";
+import { MembershipTiersTab } from "@/components/settings/membership-tiers-tab";
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { id: "whatsapp",       label: "WhatsApp",       icon: Wifi,       desc: "WhatsApp Business API" },
-  { id: "meta-ads",       label: "Meta Ads",        icon: BarChart2,  desc: "Facebook & Instagram Ads" },
-  { id: "business",       label: "Business",        icon: Building2,  desc: "Business profile" },
-  { id: "team",           label: "Team",            icon: Users,      desc: "Manage members" },
-  { id: "knowledge-base", label: "Knowledge Base",  icon: BookOpen,   desc: "Bot FAQ & product info" },
-  { id: "integrations",   label: "Integrations",    icon: Plug,       desc: "AutoCount & Bukku" },
-  { id: "webhook",        label: "Webhook",         icon: Webhook,    desc: "Webhook endpoint" },
-  { id: "account",        label: "My Account",      icon: UserCircle, desc: "Password & sign out" },
+  { id: "whatsapp",          label: "WhatsApp",       icon: Wifi,       desc: "WhatsApp Business API" },
+  { id: "meta-ads",          label: "Meta Ads",        icon: BarChart2,  desc: "Facebook & Instagram Ads" },
+  { id: "business",          label: "Business",        icon: Building2,  desc: "Business profile" },
+  { id: "team",              label: "Team",            icon: Users,      desc: "Manage members" },
+  { id: "membership-tiers",  label: "Membership",      icon: Crown,      desc: "Client membership tiers" },
+  { id: "knowledge-base",    label: "Knowledge Base",  icon: BookOpen,   desc: "Bot FAQ & product info" },
+  { id: "integrations",      label: "Integrations",    icon: Plug,       desc: "AutoCount & Bukku" },
+  { id: "webhook",           label: "Webhook",         icon: Webhook,    desc: "Webhook endpoint" },
+  { id: "account",           label: "My Account",      icon: UserCircle, desc: "Password & sign out" },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
@@ -82,6 +84,7 @@ function SettingsContent() {
             {active === "meta-ads"       && <MetaAdsSettingsTab />}
             {active === "business"       && <BusinessSettingsTab />}
             {active === "team"           && <TeamSettingsTab />}
+            {active === "membership-tiers" && <MembershipTiersTab />}
             {active === "knowledge-base" && <KnowledgeBaseTab />}
             {active === "integrations"   && <IntegrationsTab />}
             {active === "webhook"        && <WebhookSettingsTab />}

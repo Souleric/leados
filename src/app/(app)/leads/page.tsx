@@ -2,15 +2,21 @@
 
 import { Header } from "@/components/layout/header";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { DbLead, LeadStatus, LeadSource } from "@/lib/supabase/types";
+import { DbLead, LeadStatus, LeadSource, LifecycleStage } from "@/lib/supabase/types";
 import { fetchLeads } from "@/lib/api";
 import { AddLeadModal } from "@/components/leads/add-lead-modal";
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
-import { Search, Filter, Plus, ChevronRight, Phone, Calendar, Users, RefreshCw, Sheet, Loader2, X, Trash2 } from "lucide-react";
+import { Search, Filter, Plus, ChevronRight, Phone, Calendar, Users, RefreshCw, Sheet, Loader2, X, Trash2, Clock } from "lucide-react";
 
 const sourceOptions: LeadSource[] = ["Facebook", "Instagram", "TikTok", "Referral", "Website", "Walk-in"];
-const statusOptions: LeadStatus[] = ["new", "contacted", "quotation_sent", "closed_won", "lost"];
+const statusOptions: LeadStatus[] = ["new", "contacted", "proposal_sent", "converted", "inactive"];
+
+const LIFECYCLE_TABS: { id: LifecycleStage | "all"; label: string }[] = [
+  { id: "active_lead",   label: "Active Leads" },
+  { id: "inactive_lead", label: "Inactive" },
+  { id: "all",           label: "All Contacts" },
+];
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
@@ -19,8 +25,24 @@ function initials(name: string | null, phone: string) {
   if (name) return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
   return phone.slice(-2);
 }
+function proposalDays(proposalSentAt: string | null): number | null {
+  if (!proposalSentAt) return null;
+  return Math.floor((Date.now() - new Date(proposalSentAt).getTime()) / 86400000);
+}
+function ProposalAgeBadge({ days }: { days: number }) {
+  const cls =
+    days >= 15 ? "bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400"
+    : days >= 8  ? "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400"
+    : "bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-400";
+  return (
+    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ml-1.5 ${cls}`}>
+      <Clock className="w-2.5 h-2.5" />
+      {days}d
+    </span>
+  );
+}
 
-export default function LeadsPage() {
+export default function ContactsPage() {
   const [leads, setLeads] = useState<DbLead[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -33,6 +55,7 @@ export default function LeadsPage() {
   const [syncMsg, setSyncMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [lastSynced, setLastSynced] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [lifecycleTab, setLifecycleTab] = useState<LifecycleStage | "all">("active_lead");
 
   const handleDeleteLead = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
@@ -47,7 +70,6 @@ export default function LeadsPage() {
     }
   };
 
-  // Load saved sheet URL from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("gsheet_url") ?? "";
     setSavedSheetUrl(saved);
@@ -66,16 +88,17 @@ export default function LeadsPage() {
         status: statusFilter !== "all" ? statusFilter : undefined,
         source: sourceFilter !== "all" ? sourceFilter : undefined,
         q: search || undefined,
-      });
+        lifecycle: lifecycleTab,
+      } as any);
       setLeads(res.leads);
       setTotal(res.total ?? res.leads.length);
     } catch (e) {
-      setError("Failed to load leads");
+      setError("Failed to load contacts");
       console.error(e);
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, sourceFilter]);
+  }, [search, statusFilter, sourceFilter, lifecycleTab]);
 
   useEffect(() => {
     const timer = setTimeout(load, search ? 350 : 0);
@@ -94,7 +117,7 @@ export default function LeadsPage() {
     setSyncing(true);
     setSyncMsg(null);
     try {
-      const res = await fetch("/api/leads/sync-gsheet", {
+      const res: Response = await fetch("/api/leads/sync-gsheet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
@@ -111,13 +134,16 @@ export default function LeadsPage() {
     }
   };
 
+  // Filter status options by lifecycle tab
+  const filteredStatusOptions = lifecycleTab === "active_lead"
+    ? statusOptions.filter((s) => ["new", "contacted", "proposal_sent"].includes(s))
+    : lifecycleTab === "inactive_lead"
+    ? ["inactive" as LeadStatus]
+    : statusOptions;
+
   return (
     <>
-      <AddLeadModal
-        open={showModal}
-        onClose={() => setShowModal(false)}
-        onCreated={load}
-      />
+      <AddLeadModal open={showModal} onClose={() => setShowModal(false)} onCreated={load} />
 
       {/* Google Sheet Sync Modal */}
       {showSheetModal && (
@@ -134,12 +160,9 @@ export default function LeadsPage() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-
             <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
-              Reads your sheet and creates new leads or updates existing ones. Sheet must be <strong>Anyone with link can view</strong>.
+              Reads your sheet and creates new contacts or updates existing ones. Sheet must be <strong>Anyone with link can view</strong>.
             </p>
-
-            {/* Sheet URL input */}
             <label className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5 block">Sheet URL</label>
             <div className="flex gap-2 mb-1">
               <input
@@ -147,12 +170,12 @@ export default function LeadsPage() {
                 value={sheetUrl}
                 onChange={(e) => setSheetUrl(e.target.value)}
                 placeholder="https://docs.google.com/spreadsheets/d/..."
-                className="flex-1 text-xs px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-300 placeholder:text-gray-400 outline-none focus:border-emerald-300 dark:focus:border-emerald-700"
+                className="flex-1 text-xs px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 placeholder:text-gray-400 outline-none focus:border-emerald-300 dark:focus:border-emerald-700"
               />
               <button
                 onClick={handleSaveUrl}
                 disabled={!sheetUrl.trim() || sheetUrl.trim() === savedSheetUrl}
-                className="px-3 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-xl hover:bg-gray-200 disabled:opacity-40 transition-colors whitespace-nowrap"
+                className="px-3 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-200 disabled:opacity-40 transition-colors whitespace-nowrap"
               >
                 Save URL
               </button>
@@ -160,9 +183,7 @@ export default function LeadsPage() {
             {savedSheetUrl && (
               <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mb-4">URL saved — sync will use this sheet</p>
             )}
-
-            {/* Fields info */}
-            <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-800 p-3 mb-4">
+            <div className="rounded-lg bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-800 p-3 mb-4">
               <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">Columns read from sheet</p>
               <div className="grid grid-cols-2 gap-1">
                 {[
@@ -175,26 +196,24 @@ export default function LeadsPage() {
                 ].map(({ label, col }) => (
                   <div key={col} className="flex items-center gap-1.5">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                    <span className="text-[11px] text-gray-600 dark:text-gray-400">{label} <span className="text-gray-400 dark:text-gray-500">({col})</span></span>
+                    <span className="text-[11px] text-gray-600 dark:text-gray-400">{label} <span className="text-gray-400">({col})</span></span>
                   </div>
                 ))}
               </div>
             </div>
-
             {syncMsg && (
-              <div className={`mb-3 px-3 py-2.5 rounded-xl text-xs font-medium ${
+              <div className={`mb-3 px-3 py-2.5 rounded-lg text-xs font-medium ${
                 syncMsg.type === "ok"
-                  ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-900/30"
-                  : "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300 border border-red-100 dark:border-red-900/30"
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                  : "bg-red-50 text-red-700 border border-red-100"
               }`}>
                 {syncMsg.text}
               </div>
             )}
-
             <button
               onClick={handleSheetSync}
               disabled={!(savedSheetUrl || sheetUrl.trim()) || syncing}
-              className="w-full py-2.5 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               {syncing ? <><Loader2 className="w-4 h-4 animate-spin" /> Syncing...</> : "Sync Now"}
             </button>
@@ -203,28 +222,24 @@ export default function LeadsPage() {
       )}
 
       <div className="flex flex-col flex-1 overflow-hidden">
-        <Header title="Leads" />
+        <Header title="Contacts" />
         <main className="flex-1 overflow-y-auto px-7 pb-8 scrollbar-thin">
 
           {/* Page header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-5 mt-1">
             <div>
-              <h2 className="text-xl font-bold text-slate-800 dark:text-white">All Leads</h2>
+              <h2 className="text-xl font-bold text-slate-800 dark:text-white">Contacts</h2>
               <p className="text-sm text-slate-400 dark:text-slate-500 mt-0.5">
-                {loading ? "Loading..." : `${total} total leads`}
+                {loading ? "Loading..." : `${total} ${lifecycleTab === "active_lead" ? "active leads" : lifecycleTab === "inactive_lead" ? "inactive" : "total"}`}
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={load}
-                className="w-9 h-9 flex items-center justify-center rounded-xl shadow-card dark:border dark:border-white/[0.06] bg-white dark:bg-white/[0.04] hover:border-indigo-200 transition-colors"
-                title="Refresh"
-              >
+              <button onClick={load} className="w-9 h-9 flex items-center justify-center rounded-lg shadow-card dark:border dark:border-white/[0.06] bg-white dark:bg-white/[0.04]" title="Refresh">
                 <RefreshCw className={`w-4 h-4 text-slate-400 ${loading ? "animate-spin" : ""}`} />
               </button>
               <button
                 onClick={() => setShowSheetModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/[0.04] shadow-card dark:border dark:border-white/[0.06] hover:border-emerald-300 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-xl transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/[0.04] shadow-card dark:border dark:border-white/[0.06] text-slate-600 dark:text-slate-300 text-sm font-medium rounded-lg transition-colors"
               >
                 {syncing ? <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" /> : <Sheet className="w-4 h-4 text-emerald-600" />}
                 <span>Sync Sheet</span>
@@ -232,17 +247,34 @@ export default function LeadsPage() {
               </button>
               <button
                 onClick={() => setShowModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm shadow-indigo-200 dark:shadow-indigo-900/30"
+                className="flex items-center gap-2 px-4 py-2 bg-[#1E6FEB] hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
               >
                 <Plus className="w-4 h-4" />
-                Add Lead
+                Add Contact
               </button>
             </div>
           </div>
 
+          {/* Lifecycle tabs */}
+          <div className="flex items-center gap-1 mb-4 bg-white dark:bg-white/[0.04] shadow-card dark:border dark:border-white/[0.06] rounded-lg p-1 w-fit">
+            {LIFECYCLE_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => { setLifecycleTab(tab.id); setStatusFilter("all"); }}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  lifecycleTab === tab.id
+                    ? "bg-[#1E6FEB] text-white shadow-sm"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-3 mb-5">
-            <div className={`flex items-center gap-2 px-3.5 py-2.5 bg-white dark:bg-white/[0.04] shadow-card dark:border dark:border-white/[0.06] rounded-xl flex-1 min-w-48 max-w-xs transition-all`}>
+            <div className="flex items-center gap-2 px-3.5 py-2.5 bg-white dark:bg-white/[0.04] shadow-card dark:border dark:border-white/[0.06] rounded-lg flex-1 min-w-48 max-w-xs">
               <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <input
                 type="text"
@@ -257,17 +289,17 @@ export default function LeadsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as LeadStatus | "all")}
-                className="text-xs px-3 py-2.5 bg-white dark:bg-white/[0.04] shadow-card dark:border dark:border-white/[0.06] rounded-xl text-slate-600 dark:text-slate-300 outline-none cursor-pointer"
+                className="text-xs px-3 py-2.5 bg-white dark:bg-white/[0.04] shadow-card dark:border dark:border-white/[0.06] rounded-lg text-slate-600 dark:text-slate-300 outline-none cursor-pointer"
               >
                 <option value="all">All Status</option>
-                {statusOptions.map((s) => (
+                {filteredStatusOptions.map((s) => (
                   <option key={s} value={s}>{s.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}</option>
                 ))}
               </select>
               <select
                 value={sourceFilter}
                 onChange={(e) => setSourceFilter(e.target.value as LeadSource | "all")}
-                className="text-xs px-3 py-2.5 bg-white dark:bg-white/[0.04] shadow-card dark:border dark:border-white/[0.06] rounded-xl text-slate-600 dark:text-slate-300 outline-none cursor-pointer"
+                className="text-xs px-3 py-2.5 bg-white dark:bg-white/[0.04] shadow-card dark:border dark:border-white/[0.06] rounded-lg text-slate-600 dark:text-slate-300 outline-none cursor-pointer"
               >
                 <option value="all">All Sources</option>
                 {sourceOptions.map((s) => <option key={s}>{s}</option>)}
@@ -275,9 +307,8 @@ export default function LeadsPage() {
             </div>
           </div>
 
-          {/* Error */}
           {error && (
-            <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-xl text-xs text-red-600 dark:text-red-400">
+            <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-lg text-xs text-red-600 dark:text-red-400">
               {error} — <button onClick={load} className="underline">retry</button>
             </div>
           )}
@@ -288,8 +319,8 @@ export default function LeadsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-white/[0.06]">
-                    {["Name", "Phone", "Source", "Status", "Assigned To", "Created"].map((h, i) => (
-                      <th key={h} className={`text-left px-5 py-3.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider ${i > 1 && i < 3 ? "hidden lg:table-cell" : ""} ${i >= 4 ? "hidden xl:table-cell" : ""} ${i === 1 ? "hidden md:table-cell" : ""}`}>
+                    {["Contact", "Phone", "Source", "Status", "Assigned To", "Created"].map((h, i) => (
+                      <th key={h} className={`text-left px-5 py-3.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider ${i === 2 ? "hidden lg:table-cell" : ""} ${i >= 4 ? "hidden xl:table-cell" : ""} ${i === 1 ? "hidden md:table-cell" : ""}`}>
                         {h}
                       </th>
                     ))}
@@ -321,100 +352,93 @@ export default function LeadsPage() {
                             <Users className="w-7 h-7 text-slate-300 dark:text-slate-600" />
                           </div>
                           <div>
-                            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">No leads yet</p>
-                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Add your first lead or connect WhatsApp</p>
+                            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">No contacts yet</p>
+                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Add your first contact or sync from Google Sheet</p>
                           </div>
                           <button
                             onClick={() => setShowModal(true)}
-                            className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition-colors mt-1"
+                            className="flex items-center gap-1.5 px-3.5 py-2 bg-[#1E6FEB] hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors mt-1"
                           >
                             <Plus className="w-3.5 h-3.5" />
-                            Add First Lead
+                            Add First Contact
                           </button>
                         </div>
                       </td>
                     </tr>
                   ) : (
-                    leads.map((lead) => (
-                      <tr
-                        key={lead.id}
-                        className="border-b border-slate-50 dark:border-white/[0.03] hover:bg-slate-50/60 dark:hover:bg-white/[0.02] transition-colors group"
-                      >
-                        <td className="px-5 py-3.5">
-                          <Link href={`/leads/${lead.id}`} className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center shrink-0">
-                              <span className="text-[10px] font-bold text-indigo-500 dark:text-indigo-400">
-                                {initials(lead.name, lead.phone)}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 leading-none">
-                                {lead.name ?? "Unknown"}
-                              </p>
-                              <p className="text-[11px] text-slate-400 mt-0.5 md:hidden">{lead.phone}</p>
-                            </div>
-                          </Link>
-                        </td>
-                        <td className="px-5 py-3.5 hidden md:table-cell">
-                          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                            <Phone className="w-3 h-3 text-slate-300 dark:text-slate-600" />
-                            {lead.phone}
-                          </div>
-                        </td>
-                        <td className="px-5 py-3.5 hidden lg:table-cell">
-                          <span className="text-xs px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/[0.05] text-slate-500 dark:text-slate-400 font-medium">
-                            {lead.source}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <StatusBadge status={lead.status} />
-                        </td>
-                        <td className="px-5 py-3.5 hidden xl:table-cell">
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {lead.assigned_to ?? "—"}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3.5 hidden xl:table-cell">
-                          <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                            <Calendar className="w-3 h-3" />
-                            {formatDate(lead.created_at)}
-                          </div>
-                        </td>
-                        <td className="pr-4">
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={(e) => handleDeleteLead(e, lead.id)}
-                              disabled={deletingId === lead.id}
-                              className="p-1.5 text-slate-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 rounded-lg transition-colors"
-                              title="Delete lead"
-                            >
-                              {deletingId === lead.id
-                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                : <Trash2 className="w-3.5 h-3.5" />}
-                            </button>
-                            <Link href={`/leads/${lead.id}`}>
-                              <ChevronRight className="w-4 h-4 text-slate-400" />
+                    leads.map((lead) => {
+                      const pDays = lead.status === "proposal_sent" ? proposalDays(lead.proposal_sent_at) : null;
+                      return (
+                        <tr key={lead.id} className="border-b border-slate-50 dark:border-white/[0.03] hover:bg-slate-50/60 dark:hover:bg-white/[0.02] transition-colors group">
+                          <td className="px-5 py-3.5">
+                            <Link href={`/leads/${lead.id}`} className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center shrink-0">
+                                <span className="text-[10px] font-bold text-indigo-500 dark:text-indigo-400">
+                                  {initials(lead.name, lead.phone)}
+                                </span>
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 leading-none">
+                                  {lead.name ?? "Unknown"}
+                                </p>
+                                <p className="text-[11px] text-slate-400 mt-0.5 md:hidden">{lead.phone}</p>
+                              </div>
                             </Link>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td className="px-5 py-3.5 hidden md:table-cell">
+                            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                              <Phone className="w-3 h-3 text-slate-300 dark:text-slate-600" />
+                              {lead.phone}
+                            </div>
+                          </td>
+                          <td className="px-5 py-3.5 hidden lg:table-cell">
+                            <span className="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-white/[0.05] text-slate-500 dark:text-slate-400 font-medium">
+                              {lead.source}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3.5">
+                            <div className="flex items-center">
+                              <StatusBadge status={lead.status} />
+                              {pDays !== null && <ProposalAgeBadge days={pDays} />}
+                            </div>
+                          </td>
+                          <td className="px-5 py-3.5 hidden xl:table-cell">
+                            <span className="text-xs text-slate-500 dark:text-slate-400">{lead.assigned_to ?? "—"}</span>
+                          </td>
+                          <td className="px-5 py-3.5 hidden xl:table-cell">
+                            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                              <Calendar className="w-3 h-3" />
+                              {formatDate(lead.created_at)}
+                            </div>
+                          </td>
+                          <td className="pr-4">
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={(e) => handleDeleteLead(e, lead.id)}
+                                disabled={deletingId === lead.id}
+                                className="p-1.5 text-slate-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 rounded-lg transition-colors"
+                                title="Delete contact"
+                              >
+                                {deletingId === lead.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                              </button>
+                              <Link href={`/leads/${lead.id}`}>
+                                <ChevronRight className="w-4 h-4 text-slate-400" />
+                              </Link>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
             </div>
-
-            {/* Footer */}
             {!loading && leads.length > 0 && (
               <div className="px-5 py-3 border-t border-slate-50 dark:border-white/[0.04] flex items-center justify-between">
-                <p className="text-xs text-slate-400">Showing {leads.length} of {total} leads</p>
+                <p className="text-xs text-slate-400">Showing {leads.length} of {total}</p>
                 <div className="flex items-center gap-1">
-                  <button className="px-3 py-1.5 text-xs rounded-lg shadow-card dark:border dark:border-white/[0.06] text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors" disabled>
-                    Previous
-                  </button>
-                  <button className="px-3 py-1.5 text-xs rounded-lg shadow-card dark:border dark:border-white/[0.06] text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors">
-                    Next
-                  </button>
+                  <button className="px-3 py-1.5 text-xs rounded-lg shadow-card dark:border dark:border-white/[0.06] text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors" disabled>Previous</button>
+                  <button className="px-3 py-1.5 text-xs rounded-lg shadow-card dark:border dark:border-white/[0.06] text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors">Next</button>
                 </div>
               </div>
             )}

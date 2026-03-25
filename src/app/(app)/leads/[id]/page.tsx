@@ -32,12 +32,12 @@ function parseLeadExtras(notes: string): { email: string; address: string; tnb: 
   return { email, address, tnb, cleanNotes: remaining.join("\n").trim() };
 }
 
-const statusOptions: { value: LeadStatus; label: string }[] = [
-  { value: "new", label: "New Lead" },
-  { value: "contacted", label: "Contacted" },
-  { value: "quotation_sent", label: "Quotation Sent" },
-  { value: "closed_won", label: "Closed Won" },
-  { value: "lost", label: "Lost" },
+const statusOptions: { value: LeadStatus; label: string; group: string }[] = [
+  { value: "new",           label: "New Lead",       group: "Active" },
+  { value: "contacted",     label: "Contacted",      group: "Active" },
+  { value: "proposal_sent", label: "Proposal Sent",  group: "Active" },
+  { value: "converted",     label: "Converted",      group: "Close" },
+  { value: "inactive",      label: "Inactive",       group: "Close" },
 ];
 
 export default function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -134,7 +134,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   if (loadingLead) {
     return (
       <div className="flex flex-col flex-1 overflow-hidden">
-        <Header title="Lead Detail" />
+        <Header title="Contact Detail" />
         <main className="flex-1 flex items-center justify-center">
           <Loader2 className="w-6 h-6 text-violet-500 animate-spin" />
         </main>
@@ -145,10 +145,10 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   if (!lead) {
     return (
       <div className="flex flex-col flex-1 overflow-hidden">
-        <Header title="Lead Detail" />
+        <Header title="Contact Detail" />
         <main className="flex-1 flex flex-col items-center justify-center gap-2">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Lead not found</p>
-          <Link href="/leads" className="text-xs text-violet-600 underline">Back to Leads</Link>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Contact not found</p>
+          <Link href="/leads" className="text-xs text-violet-600 underline">Back to Contacts</Link>
         </main>
       </div>
     );
@@ -164,14 +164,14 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
       />
     )}
     <div className="flex flex-col flex-1 overflow-hidden">
-      <Header title="Lead Detail" />
+      <Header title="Contact Detail" />
       <main className="flex-1 overflow-hidden p-6">
         <Link
           href="/leads"
           className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white mb-4 transition-colors"
         >
           <ChevronLeft className="w-3.5 h-3.5" />
-          Back to Leads
+          Back to Contacts
         </Link>
 
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-5 h-[calc(100%-2.5rem)]">
@@ -295,11 +295,18 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
             <div className="bg-white dark:bg-gray-900 rounded-lg shadow-card dark:border dark:border-gray-800 p-5">
               <div className="flex items-center gap-2 mb-3">
                 <CheckCircle2 className="w-3.5 h-3.5 text-gray-400" />
-                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Lead Status</h3>
+                <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Contact Status</h3>
               </div>
               <div className="flex items-center gap-2 mb-3">
                 <StatusBadge status={status} />
-                <span className="text-xs text-gray-400 dark:text-gray-500">Since {formatDate(lead.created_at)}</span>
+                {status === "proposal_sent" && lead.proposal_sent_at && (() => {
+                  const days = Math.floor((Date.now() - new Date(lead.proposal_sent_at).getTime()) / 86400000);
+                  const cls = days >= 15 ? "text-red-500" : days >= 8 ? "text-amber-500" : "text-slate-400";
+                  return <span className={`text-xs font-medium ${cls}`}>{days}d since sent</span>;
+                })()}
+                {status === "converted" && lead.client_since && (
+                  <span className="text-xs text-gray-400">Client since {formatDate(lead.client_since)}</span>
+                )}
               </div>
               <select
                 value={status}
@@ -307,9 +314,16 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                 disabled={!canEditDetails}
                 className="w-full text-xs px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {statusOptions.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
-                ))}
+                <optgroup label="Active">
+                  {statusOptions.filter(s => s.group === "Active").map((s) => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="Close">
+                  {statusOptions.filter(s => s.group === "Close").map((s) => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </optgroup>
               </select>
             </div>
 

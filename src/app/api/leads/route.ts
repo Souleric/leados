@@ -1,6 +1,6 @@
 /**
- * GET  /api/leads          — list leads (with pagination + filters)
- * POST /api/leads          — manually create a lead
+ * GET  /api/leads  — list contacts (with pagination + filters)
+ * POST /api/leads  — manually create a contact
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
@@ -9,13 +9,14 @@ import { getNextAssignee } from "@/lib/auto-assign";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const status = searchParams.get("status");
-  const source = searchParams.get("source");
-  const search = searchParams.get("q");
-  const page   = parseInt(searchParams.get("page") ?? "1");
-  const limit  = parseInt(searchParams.get("limit") ?? "50");
-  const from   = (page - 1) * limit;
-  const to     = from + limit - 1;
+  const status    = searchParams.get("status");
+  const source    = searchParams.get("source");
+  const search    = searchParams.get("q");
+  const lifecycle = searchParams.get("lifecycle"); // active_lead | client | inactive_lead | all
+  const page      = parseInt(searchParams.get("page")  ?? "1");
+  const limit     = parseInt(searchParams.get("limit") ?? "50");
+  const from      = (page - 1) * limit;
+  const to        = from + limit - 1;
 
   try {
     const supabase = createAdminClient();
@@ -27,23 +28,31 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false })
       .range(from, to);
 
+    // Lifecycle filter — default to active_lead only (hides clients + inactive)
+    if (lifecycle === "all") {
+      // no lifecycle filter
+    } else if (lifecycle) {
+      query = query.eq("lifecycle_stage", lifecycle);
+    } else {
+      query = query.eq("lifecycle_stage", "active_lead");
+    }
+
     if (status) query = query.eq("status", status);
     if (source) query = query.eq("source", source);
     if (search) query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%`);
 
-    // Sales persons can only see their own assigned leads
+    // Sales persons can only see their own assigned contacts
     if (authUser && authUser.role === "agent" && !authUser.is_master_admin) {
       query = query.eq("assigned_to", authUser.name);
     }
 
     const { data, error, count } = await query;
-
     if (error) throw error;
 
     return NextResponse.json({ leads: data, total: count, page, limit });
   } catch (err) {
     console.error("[GET /api/leads]", err);
-    return NextResponse.json({ error: "Failed to fetch leads" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch contacts" }, { status: 500 });
   }
 }
 
@@ -57,17 +66,21 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createAdminClient();
-
     const workspaceId = process.env.WORKSPACE_ID;
     if (!workspaceId) {
       return NextResponse.json({ error: "WORKSPACE_ID env var not set" }, { status: 500 });
     }
 
-    // Auto-assign if enabled and not already assigned
     let assignedTo = body.assigned_to || null;
     if (!assignedTo) {
       assignedTo = await getNextAssignee(workspaceId);
     }
+
+    const insertStatus = status ?? "new";
+    const lifecycle_stage =
+      insertStatus === "converted" ? "client"
+      : insertStatus === "inactive" ? "inactive_lead"
+      : "active_lead";
 
     const { data, error } = await supabase
       .from("leads")
@@ -77,9 +90,11 @@ export async function POST(request: NextRequest) {
         name: name || null,
         source: source ?? "Manual",
         campaign: campaign || null,
-        status: status ?? "new",
+        status: insertStatus,
+        lifecycle_stage,
         assigned_to: assignedTo,
         notes: body.notes || null,
+        proposal_sent_at: insertStatus === "proposal_sent" ? new Date().toISOString() : null,
       })
       .select("*")
       .single();
@@ -90,7 +105,7 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     console.error("[POST /api/leads]", err);
     return NextResponse.json(
-      { error: err?.message ?? "Failed to create lead" },
+      { error: err?.message ?? "Failed to create contact" },
       { status: 500 }
     );
   }

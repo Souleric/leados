@@ -6,11 +6,9 @@ import { X, Loader2, UserPlus } from "lucide-react";
 const SOURCES = ["Facebook", "Instagram", "TikTok", "Referral", "Website", "Walk-in", "WhatsApp"];
 const INQUIRY_TYPES = ["Roofing", "Acrylic", "Waterproofing", "Renovation", "Consultation", "Other"];
 const STATUSES = [
-  { value: "new",            label: "New Lead" },
-  { value: "contacted",      label: "Contacted" },
-  { value: "quotation_sent", label: "Quotation Sent" },
-  { value: "closed_won",     label: "Closed Won" },
-  { value: "lost",           label: "Lost" },
+  { value: "new",           label: "New Lead" },
+  { value: "contacted",     label: "Contacted" },
+  { value: "proposal_sent", label: "Proposal Sent" },
 ];
 
 interface Props {
@@ -88,7 +86,7 @@ export function AddLeadModal({ open, onClose, onCreated }: Props) {
             <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
               <UserPlus className="w-4 h-4 text-indigo-500" />
             </div>
-            <h2 className="text-sm font-bold text-slate-800 dark:text-white">Add New Lead</h2>
+            <h2 className="text-sm font-bold text-slate-800 dark:text-white">Add New Contact</h2>
           </div>
           <button
             onClick={onClose}
@@ -198,7 +196,7 @@ export function AddLeadModal({ open, onClose, onCreated }: Props) {
               className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
             >
               {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              {saving ? "Adding..." : "Add Lead"}
+              {saving ? "Adding..." : "Add Contact"}
             </button>
             <button
               type="button"

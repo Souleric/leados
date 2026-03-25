@@ -34,21 +34,21 @@ export async function GET() {
       counts[row.status] = (counts[row.status] ?? 0) + 1;
     }
 
-    const total       = leads.length;
-    const newLeads    = counts["new"] ?? 0;
-    const inProgress  = (counts["contacted"] ?? 0) + (counts["quotation_sent"] ?? 0);
-    const closedWon   = counts["closed_won"] ?? 0;
-    const lost        = counts["lost"] ?? 0;
+    const total      = leads.length;
+    const newLeads   = counts["new"] ?? 0;
+    const inProgress = (counts["contacted"] ?? 0) + (counts["proposal_sent"] ?? 0);
+    const closedWon  = counts["converted"] ?? 0;
+    const lost       = counts["inactive"] ?? 0;
 
     // Per-member stats for sales performance chart
     const agents = (membersRes.data ?? []) as Array<{ name: string }>;
     const perMember = agents.map((a) => {
       const memberLeads = leads.filter((l) => l.assigned_to === a.name);
       return {
-        name: a.name.split(" ")[0], // first name for chart label
+        name: a.name.split(" ")[0],
         total: memberLeads.length,
-        closed_won: memberLeads.filter((l) => l.status === "closed_won").length,
-        in_progress: memberLeads.filter((l) => l.status === "contacted" || l.status === "quotation_sent").length,
+        closed_won: memberLeads.filter((l) => l.status === "converted").length,
+        in_progress: memberLeads.filter((l) => l.status === "contacted" || l.status === "proposal_sent").length,
       };
     });
 

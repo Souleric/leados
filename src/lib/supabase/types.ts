@@ -1,4 +1,5 @@
-export type LeadStatus = "new" | "contacted" | "quotation_sent" | "closed_won" | "lost";
+export type LeadStatus = "new" | "contacted" | "proposal_sent" | "converted" | "inactive";
+export type LifecycleStage = "active_lead" | "client" | "inactive_lead";
 export type LeadSource = "Facebook" | "Instagram" | "TikTok" | "Referral" | "Website" | "Walk-in" | "WhatsApp" | "Manual";
 export type MessageDirection = "inbound" | "outbound";
 export type MessageType = "text" | "image" | "audio" | "document" | "template" | "interactive" | "unknown";
@@ -31,13 +32,27 @@ export interface DbLead {
   source: string;
   campaign: string | null;
   status: LeadStatus;
+  lifecycle_stage: LifecycleStage;
   assigned_to: string | null;
   tags: string[];
   notes: string;
+  tier_id: string | null;
+  proposal_sent_at: string | null;
+  inactivity_reason: string | null;
+  client_since: string | null;
   wa_contact_id: string | null;
   last_message_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface DbMembershipTier {
+  id: string;
+  workspace_id: string;
+  name: string;
+  color: string;
+  sort_order: number;
+  created_at: string;
 }
 
 export interface DbMessage {

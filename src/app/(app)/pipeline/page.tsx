@@ -2,19 +2,25 @@
 
 import { Header } from "@/components/layout/header";
 import { AddLeadModal } from "@/components/leads/add-lead-modal";
-import { fetchLeads, updateLead } from "@/lib/api";
+import { updateLead } from "@/lib/api";
 import { DbLead, LeadStatus } from "@/lib/supabase/types";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { MoreHorizontal, Plus, Loader2 } from "lucide-react";
+import { MoreHorizontal, Plus, Loader2, Clock } from "lucide-react";
 
 const COLUMNS: { id: LeadStatus; label: string; color: string; dotColor: string }[] = [
-  { id: "new",           label: "New Lead",       color: "bg-blue-100 border-blue-300 dark:bg-blue-950/60 dark:border-blue-700",       dotColor: "bg-blue-600" },
-  { id: "contacted",     label: "Contacted",      color: "bg-amber-100 border-amber-300 dark:bg-amber-950/60 dark:border-amber-700",   dotColor: "bg-amber-500" },
-  { id: "quotation_sent",label: "Quotation Sent", color: "bg-violet-100 border-violet-300 dark:bg-violet-950/60 dark:border-violet-700", dotColor: "bg-violet-600" },
-  { id: "closed_won",    label: "Closed Won",     color: "bg-emerald-100 border-emerald-300 dark:bg-emerald-950/60 dark:border-emerald-700", dotColor: "bg-emerald-600" },
-  { id: "lost",          label: "Lost",           color: "bg-gray-200 border-gray-400 dark:bg-gray-800/70 dark:border-gray-600",       dotColor: "bg-gray-500" },
+  { id: "new",           label: "New Lead",      color: "bg-blue-50 border-blue-200 dark:bg-blue-950/60 dark:border-blue-700",         dotColor: "bg-blue-500" },
+  { id: "contacted",     label: "Contacted",     color: "bg-amber-50 border-amber-200 dark:bg-amber-950/60 dark:border-amber-700",     dotColor: "bg-amber-500" },
+  { id: "proposal_sent", label: "Proposal Sent", color: "bg-violet-50 border-violet-200 dark:bg-violet-950/60 dark:border-violet-700", dotColor: "bg-violet-500" },
+  { id: "converted",     label: "Converted",     color: "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/60 dark:border-emerald-700", dotColor: "bg-emerald-500" },
+  { id: "inactive",      label: "Inactive",      color: "bg-gray-100 border-gray-300 dark:bg-gray-800/70 dark:border-gray-600",        dotColor: "bg-gray-400" },
 ];
+
+type ColumnMap = Record<LeadStatus, DbLead[]>;
+
+function emptyColumns(): ColumnMap {
+  return { new: [], contacted: [], proposal_sent: [], converted: [], inactive: [] };
+}
 
 function formatRelative(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
@@ -23,10 +29,22 @@ function formatRelative(iso: string) {
   if (days === 1) return "Yesterday";
   return `${days}d ago`;
 }
-
 function initials(name: string | null, phone: string) {
   if (name) return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
   return phone.slice(-2);
+}
+
+function ProposalAge({ sentAt }: { sentAt: string | null }) {
+  if (!sentAt) return null;
+  const days = Math.floor((Date.now() - new Date(sentAt).getTime()) / 86400000);
+  const cls = days >= 15 ? "text-red-500 bg-red-50 dark:bg-red-500/10"
+    : days >= 8 ? "text-amber-500 bg-amber-50 dark:bg-amber-500/10"
+    : "text-slate-400 bg-slate-50 dark:bg-white/[0.05]";
+  return (
+    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${cls}`}>
+      <Clock className="w-2.5 h-2.5" />{days}d
+    </span>
+  );
 }
 
 function PipelineCard({ lead }: { lead: DbLead }) {
@@ -35,7 +53,7 @@ function PipelineCard({ lead }: { lead: DbLead }) {
       href={`/leads/${lead.id}`}
       draggable
       onDragStart={(e) => e.dataTransfer.setData("leadId", lead.id)}
-      className="block bg-white dark:bg-[#1E2238] border border-[#D8DCFF] dark:border-[#252840] rounded-xl p-3.5 hover:shadow-md hover:border-[#3D52F5]/30 dark:hover:border-[#3D52F5]/40 transition-all cursor-pointer group"
+      className="block bg-white dark:bg-[#1E2238] border border-slate-200 dark:border-[#252840] rounded-lg p-3.5 hover:shadow-sm hover:border-[#1E6FEB]/30 dark:hover:border-[#1E6FEB]/40 transition-all cursor-pointer group"
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -45,30 +63,19 @@ function PipelineCard({ lead }: { lead: DbLead }) {
             </span>
           </div>
           <div>
-            <p className="text-xs font-semibold text-gray-900 dark:text-white leading-tight">
-              {lead.name ?? "Unknown"}
-            </p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-white leading-tight">{lead.name ?? "Unknown"}</p>
             <p className="text-[10px] text-gray-400 mt-0.5">{lead.phone}</p>
           </div>
         </div>
-        <button
-          onClick={(e) => e.preventDefault()}
-          className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-        >
+        <button onClick={(e) => e.preventDefault()} className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
           <MoreHorizontal className="w-3.5 h-3.5 text-gray-400" />
         </button>
       </div>
       <div className="flex items-center gap-1.5 mb-2">
         {lead.source && (
-          <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-            {lead.source}
-          </span>
+          <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">{lead.source}</span>
         )}
-        {lead.campaign && (
-          <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 font-medium truncate max-w-[100px]">
-            {lead.campaign}
-          </span>
-        )}
+        {lead.status === "proposal_sent" && <ProposalAge sentAt={lead.proposal_sent_at} />}
       </div>
       <div className="flex items-center justify-between">
         <span className="text-[11px] text-gray-400 dark:text-gray-500">{formatRelative(lead.created_at)}</span>
@@ -81,29 +88,26 @@ function PipelineCard({ lead }: { lead: DbLead }) {
 }
 
 export default function PipelinePage() {
-  const [columnLeads, setColumnLeads] = useState<Record<LeadStatus, DbLead[]>>({
-    new: [], contacted: [], quotation_sent: [], closed_won: [], lost: [],
-  });
+  const [columnLeads, setColumnLeads] = useState<ColumnMap>(emptyColumns());
   const [loading, setLoading] = useState(true);
   const [dragOverCol, setDragOverCol] = useState<LeadStatus | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [totalLeads, setTotalLeads] = useState(0);
-  const [wonCount, setWonCount] = useState(0);
+  const [totalActive, setTotalActive] = useState(0);
+  const [convertedCount, setConvertedCount] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetchLeads({ limit: 200 });
-      const grouped: Record<LeadStatus, DbLead[]> = {
-        new: [], contacted: [], quotation_sent: [], closed_won: [], lost: [],
-      };
-      for (const lead of res.leads) {
+      const res: Response = await fetch("/api/leads?lifecycle=all&limit=200");
+      const data = await res.json();
+      const grouped = emptyColumns();
+      for (const lead of (data.leads ?? []) as DbLead[]) {
         const s = lead.status as LeadStatus;
-        if (grouped[s]) grouped[s].push(lead);
+        if (grouped[s] !== undefined) grouped[s].push(lead);
       }
       setColumnLeads(grouped);
-      setTotalLeads(res.total);
-      setWonCount(grouped.closed_won.length);
+      setTotalActive(grouped.new.length + grouped.contacted.length + grouped.proposal_sent.length);
+      setConvertedCount(grouped.converted.length);
     } catch (e) {
       console.error(e);
     } finally {
@@ -133,12 +137,11 @@ export default function PipelinePage() {
       return { ...next };
     });
     setDragOverCol(null);
-    // Persist status change — reload on failure to revert optimistic update
     try {
       await updateLead(leadId, { status: targetStatus });
     } catch (e) {
       console.error(e);
-      load(); // revert UI to match DB
+      load();
     }
   };
 
@@ -153,15 +156,15 @@ export default function PipelinePage() {
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sales Pipeline</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                {loading ? "Loading..." : `${totalLeads} leads · ${wonCount} won`}
+                {loading ? "Loading..." : `${totalActive} active · ${convertedCount} converted`}
               </p>
             </div>
             <button
               onClick={() => setShowModal(true)}
-              className="flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 bg-[#1E6FEB] text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              Add Lead
+              Add Contact
             </button>
           </div>
 
@@ -177,13 +180,12 @@ export default function PipelinePage() {
                   <div
                     key={col.id}
                     className={`flex flex-col flex-shrink-0 w-64 rounded-lg border p-3 transition-all ${col.color} ${
-                      dragOverCol === col.id ? "ring-2 ring-[#3D52F5]/50 dark:ring-[#3D52F5]/60" : ""
+                      dragOverCol === col.id ? "ring-2 ring-[#1E6FEB]/40" : ""
                     }`}
                     onDragOver={(e) => { e.preventDefault(); setDragOverCol(col.id); }}
                     onDragLeave={() => setDragOverCol(null)}
                     onDrop={(e) => handleDrop(e, col.id)}
                   >
-                    {/* Column header */}
                     <div className="flex items-center justify-between mb-3 px-0.5">
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${col.dotColor}`} />
@@ -194,16 +196,13 @@ export default function PipelinePage() {
                       </span>
                     </div>
 
-                    {/* Cards */}
                     <div className="flex-1 overflow-y-auto space-y-2 scrollbar-thin min-h-[100px]">
                       {colLeads.length === 0 ? (
-                        <div className="flex items-center justify-center h-20 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
-                          <p className="text-[11px] text-gray-400 dark:text-gray-500">Drop leads here</p>
+                        <div className="flex items-center justify-center h-20 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+                          <p className="text-[11px] text-gray-400 dark:text-gray-500">Drop here</p>
                         </div>
                       ) : (
-                        colLeads.map((lead) => (
-                          <PipelineCard key={lead.id} lead={lead} />
-                        ))
+                        colLeads.map((lead) => <PipelineCard key={lead.id} lead={lead} />)
                       )}
                     </div>
 
