@@ -23,7 +23,7 @@ export function KpiCard({
   const isPositive = change !== undefined && change >= 0;
 
   return (
-    <div className="bg-white dark:bg-white/[0.04] rounded-lg p-5 hover:shadow-sm hover:shadow-slate-200/80 dark:hover:shadow-black/20 transition-all duration-200 border border-slate-200 dark:border-white/[0.06]">
+    <div className="bg-white dark:bg-white/[0.04] rounded-lg p-5 shadow-card dark:border dark:border-white/[0.06] transition-all duration-200">
       <div className="flex items-start justify-between mb-4">
         <div className={cn("w-9 h-9 rounded-md flex items-center justify-center shrink-0", iconBg)}>
           <Icon className={cn("w-[18px] h-[18px]", iconColor)} strokeWidth={2.5} />

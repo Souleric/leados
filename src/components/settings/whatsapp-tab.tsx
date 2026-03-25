@@ -255,7 +255,7 @@ export function WhatsAppSettingsTab() {
         </div>
 
         {/* ── Option A: Embedded Signup ── */}
-        <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
+        <div className="bg-white dark:bg-white/[0.04] rounded-lg shadow-card dark:border dark:border-white/[0.06] overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Quick Connect</h3>
@@ -306,7 +306,7 @@ export function WhatsAppSettingsTab() {
         </div>
 
         {/* ── Option B: Manual setup ── */}
-        <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
+        <div className="bg-white dark:bg-white/[0.04] rounded-lg shadow-card dark:border dark:border-white/[0.06] overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Manual Configuration</h3>
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">

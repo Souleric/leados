@@ -35,7 +35,7 @@ export function InquiryBreakdownChart({ kpis }: { kpis: Kpis }) {
   const total = kpis.totalLeads;
 
   return (
-    <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] p-5">
+    <div className="bg-white dark:bg-white/[0.04] rounded-lg shadow-card dark:border dark:border-white/[0.06] p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-bold text-slate-800 dark:text-white">Lead Breakdown</h3>

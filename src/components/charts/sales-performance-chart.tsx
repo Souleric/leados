@@ -30,7 +30,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export function SalesPerformanceChart({ data }: { data: MemberStat[] }) {
   return (
-    <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] p-5">
+    <div className="bg-white dark:bg-white/[0.04] rounded-lg shadow-card dark:border dark:border-white/[0.06] p-5">
       <div className="mb-4">
         <h3 className="text-sm font-bold text-slate-800 dark:text-white">Sales Person Performance</h3>
         <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Leads assigned vs closed</p>

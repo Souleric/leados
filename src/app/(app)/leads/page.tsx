@@ -217,14 +217,14 @@ export default function LeadsPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={load}
-                className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.04] hover:border-indigo-200 transition-colors"
+                className="w-9 h-9 flex items-center justify-center rounded-xl shadow-card dark:border dark:border-white/[0.06] bg-white dark:bg-white/[0.04] hover:border-indigo-200 transition-colors"
                 title="Refresh"
               >
                 <RefreshCw className={`w-4 h-4 text-slate-400 ${loading ? "animate-spin" : ""}`} />
               </button>
               <button
                 onClick={() => setShowSheetModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.06] hover:border-emerald-300 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-xl transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/[0.04] shadow-card dark:border dark:border-white/[0.06] hover:border-emerald-300 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-xl transition-colors"
               >
                 {syncing ? <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" /> : <Sheet className="w-4 h-4 text-emerald-600" />}
                 <span>Sync Sheet</span>
@@ -242,7 +242,7 @@ export default function LeadsPage() {
 
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-3 mb-5">
-            <div className={`flex items-center gap-2 px-3.5 py-2.5 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.06] rounded-xl flex-1 min-w-48 max-w-xs transition-all`}>
+            <div className={`flex items-center gap-2 px-3.5 py-2.5 bg-white dark:bg-white/[0.04] shadow-card dark:border dark:border-white/[0.06] rounded-xl flex-1 min-w-48 max-w-xs transition-all`}>
               <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <input
                 type="text"
@@ -257,7 +257,7 @@ export default function LeadsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as LeadStatus | "all")}
-                className="text-xs px-3 py-2.5 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.06] rounded-xl text-slate-600 dark:text-slate-300 outline-none cursor-pointer"
+                className="text-xs px-3 py-2.5 bg-white dark:bg-white/[0.04] shadow-card dark:border dark:border-white/[0.06] rounded-xl text-slate-600 dark:text-slate-300 outline-none cursor-pointer"
               >
                 <option value="all">All Status</option>
                 {statusOptions.map((s) => (
@@ -267,7 +267,7 @@ export default function LeadsPage() {
               <select
                 value={sourceFilter}
                 onChange={(e) => setSourceFilter(e.target.value as LeadSource | "all")}
-                className="text-xs px-3 py-2.5 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.06] rounded-xl text-slate-600 dark:text-slate-300 outline-none cursor-pointer"
+                className="text-xs px-3 py-2.5 bg-white dark:bg-white/[0.04] shadow-card dark:border dark:border-white/[0.06] rounded-xl text-slate-600 dark:text-slate-300 outline-none cursor-pointer"
               >
                 <option value="all">All Sources</option>
                 {sourceOptions.map((s) => <option key={s}>{s}</option>)}
@@ -283,7 +283,7 @@ export default function LeadsPage() {
           )}
 
           {/* Table */}
-          <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
+          <div className="bg-white dark:bg-white/[0.04] rounded-lg shadow-card dark:border dark:border-white/[0.06] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -409,10 +409,10 @@ export default function LeadsPage() {
               <div className="px-5 py-3 border-t border-slate-50 dark:border-white/[0.04] flex items-center justify-between">
                 <p className="text-xs text-slate-400">Showing {leads.length} of {total} leads</p>
                 <div className="flex items-center gap-1">
-                  <button className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/[0.06] text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors" disabled>
+                  <button className="px-3 py-1.5 text-xs rounded-lg shadow-card dark:border dark:border-white/[0.06] text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors" disabled>
                     Previous
                   </button>
-                  <button className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/[0.06] text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors">
+                  <button className="px-3 py-1.5 text-xs rounded-lg shadow-card dark:border dark:border-white/[0.06] text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors">
                     Next
                   </button>
                 </div>

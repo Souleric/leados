@@ -104,7 +104,7 @@ export function MetaAdsSettingsTab() {
       </div>
 
       {/* Credentials */}
-      <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
+      <div className="bg-white dark:bg-white/[0.04] rounded-lg shadow-card dark:border dark:border-white/[0.06] overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
           <BarChart2 className="w-4 h-4 text-gray-400" />
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Ad Account Credentials</h3>
@@ -202,7 +202,7 @@ export function MetaAdsSettingsTab() {
       </div>
 
       {/* Setup guide */}
-      <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
+      <div className="bg-white dark:bg-white/[0.04] rounded-lg shadow-card dark:border dark:border-white/[0.06] overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">How to Get Your Ad Account Credentials</h3>
         </div>

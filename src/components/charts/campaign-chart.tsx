@@ -38,7 +38,7 @@ export function CampaignChart({ campaigns }: CampaignChartProps) {
     Clicks: c.clicks,
   }));
   return (
-    <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] p-5">
+    <div className="bg-white dark:bg-white/[0.04] rounded-lg shadow-card dark:border dark:border-white/[0.06] p-5">
       <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className="text-sm font-bold text-slate-800 dark:text-white">Leads per Campaign</h3>

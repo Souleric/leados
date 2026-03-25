@@ -44,7 +44,7 @@ export function CPLTrendChart({ data }: CPLTrendChartProps) {
   }));
 
   return (
-    <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] p-5">
+    <div className="bg-white dark:bg-white/[0.04] rounded-lg shadow-card dark:border dark:border-white/[0.06] p-5">
       <div className="mb-5">
         <h3 className="text-sm font-bold text-slate-800 dark:text-white">CPL Trend</h3>
         <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Cost per lead & leads generated weekly (last 90 days)</p>
