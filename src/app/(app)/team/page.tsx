@@ -86,9 +86,10 @@ export default function TeamPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const totalLeads   = Object.values(stats).reduce((s, m) => s + m.total, 0);
-  const totalWon     = Object.values(stats).reduce((s, m) => s + m.closed_won, 0);
-  const totalActive  = Object.values(stats).reduce((s, m) => s + m.contacted + m.quotation_sent, 0);
+  const agents = members.filter((m) => m.role === "agent");
+  const totalLeads   = agents.reduce((s, m) => s + (stats[m.name]?.total ?? 0), 0);
+  const totalWon     = agents.reduce((s, m) => s + (stats[m.name]?.closed_won ?? 0), 0);
+  const totalActive  = agents.reduce((s, m) => s + (stats[m.name]?.contacted ?? 0) + (stats[m.name]?.quotation_sent ?? 0), 0);
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -115,7 +116,7 @@ export default function TeamPage() {
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {[
-            { label: "Total Members", value: members.length, icon: Users,      color: "text-indigo-600",  bg: "bg-indigo-50 dark:bg-indigo-950/40" },
+            { label: "Sales Persons", value: agents.length, icon: Users,      color: "text-indigo-600",  bg: "bg-indigo-50 dark:bg-indigo-950/40" },
             { label: "Total Leads",   value: totalLeads,     icon: TrendingUp,  color: "text-blue-600",    bg: "bg-blue-50 dark:bg-blue-950/40" },
             { label: "Active",        value: totalActive,    icon: UserCheck,   color: "text-amber-600",   bg: "bg-amber-50 dark:bg-amber-950/40" },
             { label: "Closed Won",    value: totalWon,       icon: UserCheck,   color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/40" },
@@ -157,7 +158,7 @@ export default function TeamPage() {
           <>
             {/* Member cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
-              {members.map((member, i) => {
+              {members.filter((m) => m.role === "agent").map((member, i) => {
                 const color = COLORS[i % COLORS.length];
                 const s = stats[member.name] ?? { total: 0, new: 0, contacted: 0, quotation_sent: 0, closed_won: 0, lost: 0 };
                 const closeRate = s.total > 0 ? Math.round((s.closed_won / s.total) * 100) : 0;
@@ -240,6 +241,7 @@ export default function TeamPage() {
                   </thead>
                   <tbody>
                     {[...members]
+                      .filter((m) => m.role === "agent")
                       .sort((a, b) => (stats[b.name]?.closed_won ?? 0) - (stats[a.name]?.closed_won ?? 0))
                       .map((member, index) => {
                         const color = COLORS[members.indexOf(member) % COLORS.length];
