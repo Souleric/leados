@@ -176,7 +176,7 @@ export default function PipelinePage() {
                 return (
                   <div
                     key={col.id}
-                    className={`flex flex-col flex-shrink-0 w-64 rounded-2xl border p-3 transition-all ${col.color} ${
+                    className={`flex flex-col flex-shrink-0 w-64 rounded-lg border p-3 transition-all ${col.color} ${
                       dragOverCol === col.id ? "ring-2 ring-[#3D52F5]/50 dark:ring-[#3D52F5]/60" : ""
                     }`}
                     onDragOver={(e) => { e.preventDefault(); setDragOverCol(col.id); }}

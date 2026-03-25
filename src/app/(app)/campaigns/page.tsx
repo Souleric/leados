@@ -209,7 +209,7 @@ export default function CampaignsPage() {
             { label: "Total Clicks",    value: totalClicks.toLocaleString(),      icon: Target,     color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/40" },
             { label: "Avg Cost / Lead", value: fmt(avgCPL, "RM ", 2),            icon: TrendingUp, color: "text-blue-600",    bg: "bg-blue-50 dark:bg-blue-950/40" },
           ].map((kpi) => (
-            <div key={kpi.label} className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] p-5">
+            <div key={kpi.label} className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] p-5">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">{kpi.label}</p>
@@ -238,8 +238,8 @@ export default function CampaignsPage() {
 
         {/* Empty state */}
         {!loading && campaigns.length === 0 ? (
-          <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] p-12 flex flex-col items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
+          <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] p-12 flex flex-col items-center gap-4">
+            <div className="w-14 h-14 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
               <BarChart2 className="w-7 h-7 text-indigo-400" />
             </div>
             <div className="text-center">
@@ -257,7 +257,7 @@ export default function CampaignsPage() {
           </div>
         ) : (
           /* Table */
-          <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
+          <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -358,7 +358,7 @@ export default function CampaignsPage() {
 
         {/* Setup guide */}
         {!loading && campaigns.length === 0 && (
-          <div className="mt-5 rounded-2xl border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/50 dark:bg-indigo-950/20 p-5">
+          <div className="mt-5 rounded-lg border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/50 dark:bg-indigo-950/20 p-5">
             <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 mb-3">Setup checklist to enable Meta Ads sync</p>
             <ol className="space-y-2">
               {[

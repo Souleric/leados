@@ -13,7 +13,7 @@ interface Kpis {
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl px-4 py-3 shadow-lg text-xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-lg px-4 py-3 shadow-lg text-xs">
         <p className="font-bold text-slate-700 dark:text-slate-200">{payload[0].name}</p>
         <p className="font-semibold mt-1" style={{ color: payload[0].payload.color }}>
           {payload[0].value} leads
@@ -35,7 +35,7 @@ export function InquiryBreakdownChart({ kpis }: { kpis: Kpis }) {
   const total = kpis.totalLeads;
 
   return (
-    <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] p-5">
+    <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-bold text-slate-800 dark:text-white">Lead Breakdown</h3>

@@ -47,7 +47,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo / brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-600 mb-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-indigo-600 mb-4">
             <span className="text-white font-bold text-xl">L</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">LeadOS</h1>
@@ -56,7 +56,7 @@ export default function LoginPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 space-y-4 shadow-sm"
+          className="bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 p-6 space-y-4 shadow-sm"
         >
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">

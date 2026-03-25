@@ -16,7 +16,7 @@ interface CampaignChartProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl px-4 py-3 shadow-lg text-xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-lg px-4 py-3 shadow-lg text-xs">
         <p className="font-bold text-slate-700 dark:text-slate-200 mb-2 max-w-[160px] truncate">{label}</p>
         {payload.map((entry: any) => (
           <div key={entry.name} className="flex items-center gap-2 mt-1">
@@ -38,7 +38,7 @@ export function CampaignChart({ campaigns }: CampaignChartProps) {
     Clicks: c.clicks,
   }));
   return (
-    <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] p-5">
+    <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] p-5">
       <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className="text-sm font-bold text-slate-800 dark:text-white">Leads per Campaign</h3>

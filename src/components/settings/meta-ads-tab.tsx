@@ -92,7 +92,7 @@ export function MetaAdsSettingsTab() {
     <div className="space-y-5">
 
       {/* Info banner */}
-      <div className="rounded-2xl border border-blue-100 dark:border-blue-900/40 bg-blue-50 dark:bg-blue-950/20 p-4 flex items-start gap-3">
+      <div className="rounded-lg border border-blue-100 dark:border-blue-900/40 bg-blue-50 dark:bg-blue-950/20 p-4 flex items-start gap-3">
         <BarChart2 className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
         <div>
           <p className="text-xs font-semibold text-blue-700 dark:text-blue-300">Standalone Meta Ads Integration</p>
@@ -104,7 +104,7 @@ export function MetaAdsSettingsTab() {
       </div>
 
       {/* Credentials */}
-      <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
+      <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
           <BarChart2 className="w-4 h-4 text-gray-400" />
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Ad Account Credentials</h3>
@@ -202,7 +202,7 @@ export function MetaAdsSettingsTab() {
       </div>
 
       {/* Setup guide */}
-      <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
+      <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">How to Get Your Ad Account Credentials</h3>
         </div>
@@ -250,7 +250,7 @@ export function MetaAdsSettingsTab() {
       </div>
 
       {/* Useful links */}
-      <div className="rounded-2xl border border-gray-100 dark:border-gray-800 p-4 bg-gray-50 dark:bg-gray-800/30">
+      <div className="rounded-lg border border-gray-100 dark:border-gray-800 p-4 bg-gray-50 dark:bg-gray-800/30">
         <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Useful links</p>
         <div className="space-y-1.5">
           {[

@@ -77,7 +77,7 @@ export function BusinessSettingsTab() {
 
   return (
     <div className="space-y-5">
-      <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
+      <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
           <Building2 className="w-4 h-4 text-gray-400" />
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Business Profile</h3>
@@ -151,7 +151,7 @@ export function BusinessSettingsTab() {
         </div>
       </div>
       {/* Danger Zone */}
-      <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-red-100 dark:border-red-900/30 overflow-hidden">
+      <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-red-100 dark:border-red-900/30 overflow-hidden">
         <div className="px-5 py-4 border-b border-red-100 dark:border-red-900/30 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-red-500" />
           <h3 className="text-sm font-semibold text-red-600 dark:text-red-400">Danger Zone</h3>

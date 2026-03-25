@@ -122,7 +122,7 @@ export default function LeadsPage() {
       {/* Google Sheet Sync Modal */}
       {showSheetModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
@@ -283,7 +283,7 @@ export default function LeadsPage() {
           )}
 
           {/* Table */}
-          <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
+          <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -317,7 +317,7 @@ export default function LeadsPage() {
                     <tr>
                       <td colSpan={7} className="text-center py-20">
                         <div className="flex flex-col items-center gap-3">
-                          <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-white/[0.03] flex items-center justify-center">
+                          <div className="w-14 h-14 rounded-lg bg-slate-50 dark:bg-white/[0.03] flex items-center justify-center">
                             <Users className="w-7 h-7 text-slate-300 dark:text-slate-600" />
                           </div>
                           <div>

@@ -220,7 +220,7 @@ export function WhatsAppSettingsTab() {
 
       <div className="space-y-5">
         {/* Connection status banner */}
-        <div className={`rounded-2xl border p-4 flex items-center gap-3 ${
+        <div className={`rounded-lg border p-4 flex items-center gap-3 ${
           data?.meta_connected
             ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/40"
             : "bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/40"
@@ -255,7 +255,7 @@ export function WhatsAppSettingsTab() {
         </div>
 
         {/* ── Option A: Embedded Signup ── */}
-        <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
+        <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Quick Connect</h3>
@@ -306,7 +306,7 @@ export function WhatsAppSettingsTab() {
         </div>
 
         {/* ── Option B: Manual setup ── */}
-        <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
+        <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Manual Configuration</h3>
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
@@ -435,7 +435,7 @@ export function WhatsAppSettingsTab() {
         </div>
 
         {/* Help callout */}
-        <div className="rounded-2xl border border-gray-100 dark:border-gray-800 p-4 bg-gray-50 dark:bg-gray-800/30">
+        <div className="rounded-lg border border-gray-100 dark:border-gray-800 p-4 bg-gray-50 dark:bg-gray-800/30">
           <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Need help setting up?</p>
           <div className="space-y-1.5">
             {[

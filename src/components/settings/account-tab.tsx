@@ -71,7 +71,7 @@ export function AccountTab() {
   return (
     <div className="space-y-5">
       {/* Profile info */}
-      <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] p-5">
+      <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] p-5">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-950/50 flex items-center justify-center">
             <User className="w-5 h-5 text-violet-600 dark:text-violet-400" />
@@ -94,7 +94,7 @@ export function AccountTab() {
       </div>
 
       {/* Change password */}
-      <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] p-5">
+      <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] p-5">
         <div className="flex items-center gap-2 mb-4">
           <KeyRound className="w-4 h-4 text-gray-400" />
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Change Password</h3>

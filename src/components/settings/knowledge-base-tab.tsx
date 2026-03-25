@@ -170,7 +170,7 @@ export function KnowledgeBaseTab() {
   return (
     <div className="space-y-4">
       {/* Header card */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-gray-400" />
@@ -204,7 +204,7 @@ export function KnowledgeBaseTab() {
 
       {/* Upload panel */}
       {showUpload && (
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 space-y-4">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-5 space-y-4">
           <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <Upload className="w-4 h-4 text-indigo-500" />
             Upload a file
@@ -297,7 +297,7 @@ export function KnowledgeBaseTab() {
 
       {/* Manual add form */}
       {showAddForm && (
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 space-y-4">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-5 space-y-4">
           <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <Plus className="w-4 h-4 text-indigo-500" />
             New entry
@@ -354,7 +354,7 @@ export function KnowledgeBaseTab() {
       )}
 
       {/* Entries list */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-12 gap-2 text-gray-400">
             <Loader2 className="w-4 h-4 animate-spin" />

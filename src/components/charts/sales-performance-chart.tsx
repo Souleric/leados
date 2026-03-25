@@ -15,7 +15,7 @@ interface MemberStat {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl px-4 py-3 shadow-lg text-xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-lg px-4 py-3 shadow-lg text-xs">
         <p className="font-bold text-slate-700 dark:text-slate-200 mb-2">{label}</p>
         {payload.map((p: any) => (
           <p key={p.name} className="font-semibold" style={{ color: p.color }}>
@@ -30,7 +30,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export function SalesPerformanceChart({ data }: { data: MemberStat[] }) {
   return (
-    <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] p-5">
+    <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] p-5">
       <div className="mb-4">
         <h3 className="text-sm font-bold text-slate-800 dark:text-white">Sales Person Performance</h3>
         <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Leads assigned vs closed</p>

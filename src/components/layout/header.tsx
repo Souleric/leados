@@ -29,9 +29,9 @@ export function Header({ title }: { title?: string }) {
 
       {/* Center: search — hidden on small mobile */}
       <div
-        className={`hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-lg border transition-all duration-200 bg-[#F2F4F8] dark:bg-[#1A2235] ${
+        className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-md border transition-all duration-200 bg-[#F2F4F8] dark:bg-[#1A2235] ${
           searchFocused
-            ? "border-[#1E6FEB]/40 shadow-sm w-64"
+            ? "border-[#1E6FEB]/50 shadow-sm w-60"
             : "border-[#E2E6EF] dark:border-[#1F2D42] w-44"
         }`}
       >
@@ -79,7 +79,7 @@ function IconBtn({
   return (
     <button
       onClick={onClick}
-      className="relative w-9 h-9 flex items-center justify-center rounded-lg bg-[#F2F4F8] dark:bg-[#1A2235] border border-[#E2E6EF] dark:border-[#1F2D42] hover:border-[#1E6FEB]/40 hover:bg-[#EBF2FF] dark:hover:bg-[#162038] hover:shadow-sm transition-all"
+      className="relative w-8 h-8 flex items-center justify-center rounded-md bg-[#F2F4F8] dark:bg-[#1A2235] border border-[#E2E6EF] dark:border-[#1F2D42] hover:border-[#1E6FEB]/40 hover:bg-[#EBF2FF] dark:hover:bg-[#162038] transition-all"
     >
       {children}
       {badge && (

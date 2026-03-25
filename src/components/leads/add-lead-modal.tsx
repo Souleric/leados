@@ -81,7 +81,7 @@ export function AddLeadModal({ open, onClose, onCreated }: Props) {
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-slate-900/20 border border-slate-100 dark:border-white/[0.08] overflow-hidden">
+      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-xl shadow-2xl shadow-slate-900/20 border border-slate-100 dark:border-white/[0.08] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-white/[0.06]">
           <div className="flex items-center gap-3">

@@ -13,7 +13,7 @@ interface DataPoint {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/50 dark:shadow-black/30 text-xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-lg px-4 py-3 shadow-lg shadow-slate-200/50 dark:shadow-black/30 text-xs">
         <p className="font-bold text-slate-700 dark:text-slate-200">{label}</p>
         <p className="text-indigo-500 font-semibold mt-1">{payload[0].value} leads</p>
       </div>
@@ -28,7 +28,7 @@ export function LeadsBySourceChart({ data }: { data: DataPoint[] }) {
   const chartData = data.map((d) => ({ source: d.source, leads: d.total }));
 
   return (
-    <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] p-5">
+    <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] p-5">
       <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className="text-sm font-bold text-slate-800 dark:text-white">Leads by Source</h3>

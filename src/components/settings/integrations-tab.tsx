@@ -103,7 +103,7 @@ function ProviderCard({ provider, initial }: { provider: Provider; initial?: Int
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
       {/* Header row */}
       <div
         className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors"
@@ -324,7 +324,7 @@ export function IntegrationsTab() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-5">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Accounting Integrations</h3>
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
           Connect your accounting software to link quotations and invoices directly to leads.

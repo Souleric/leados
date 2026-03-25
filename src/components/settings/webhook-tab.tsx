@@ -91,7 +91,7 @@ export function WebhookSettingsTab() {
   return (
     <div className="space-y-5">
       {/* Webhook URL + verify token */}
-      <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
+      <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
           <Webhook className="w-4 h-4 text-gray-400" />
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Webhook Endpoint</h3>
@@ -154,7 +154,7 @@ export function WebhookSettingsTab() {
       </div>
 
       {/* Step-by-step guide */}
-      <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
+      <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-gray-400" />
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">How to Register the Webhook in Meta</h3>
@@ -203,7 +203,7 @@ export function WebhookSettingsTab() {
       </div>
 
       {/* Subscriptions reminder */}
-      <div className="rounded-2xl border border-amber-100 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-950/20 p-4">
+      <div className="rounded-lg border border-amber-100 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-950/20 p-4">
         <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 mb-1">Required webhook field</p>
         <p className="text-xs text-amber-600 dark:text-amber-400">
           Make sure you subscribe to the <code className="font-mono bg-amber-100 dark:bg-amber-900/40 px-1 rounded">messages</code> field only.

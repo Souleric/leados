@@ -178,7 +178,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
           {/* LEFT */}
           <div className="xl:col-span-2 flex flex-col gap-4 overflow-y-auto scrollbar-thin pr-1">
             {/* Contact card */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+            <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 p-5">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
@@ -292,7 +292,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
             </div>
 
             {/* Status */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+            <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 p-5">
               <div className="flex items-center gap-2 mb-3">
                 <CheckCircle2 className="w-3.5 h-3.5 text-gray-400" />
                 <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Lead Status</h3>
@@ -314,7 +314,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
             </div>
 
             {/* Documents */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+            <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <FileText className="w-3.5 h-3.5 text-gray-400" />
@@ -388,7 +388,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
             </div>
 
             {/* Notes */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+            <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 p-5">
               <div className="flex items-center gap-2 mb-3">
                 <StickyNote className="w-3.5 h-3.5 text-gray-400" />
                 <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Notes</h3>
@@ -416,7 +416,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
           <div className="xl:col-span-3 flex flex-col gap-4 overflow-y-auto scrollbar-thin pr-1">
 
             {/* Activity Log */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 flex flex-col overflow-hidden">
+            <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 flex flex-col overflow-hidden">
               <div className="px-5 py-3.5 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
                 <Activity className="w-4 h-4 text-gray-400" />
                 <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Activity Log</span>
@@ -468,7 +468,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
             </div>
 
             {/* Messaging Channels */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+            <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 p-5">
               <div className="flex items-center gap-2 mb-4">
                 <MessageSquare className="w-3.5 h-3.5 text-gray-400" />
                 <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Messaging Channels</h3>

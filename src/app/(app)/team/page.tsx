@@ -120,7 +120,7 @@ export default function TeamPage() {
             { label: "Active",        value: totalActive,    icon: UserCheck,   color: "text-amber-600",   bg: "bg-amber-50 dark:bg-amber-950/40" },
             { label: "Closed Won",    value: totalWon,       icon: UserCheck,   color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/40" },
           ].map((kpi) => (
-            <div key={kpi.label} className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] p-5">
+            <div key={kpi.label} className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] p-5">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">{kpi.label}</p>
@@ -141,8 +141,8 @@ export default function TeamPage() {
             <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
           </div>
         ) : members.length === 0 ? (
-          <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] p-12 flex flex-col items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
+          <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] p-12 flex flex-col items-center gap-4">
+            <div className="w-14 h-14 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
               <Users className="w-7 h-7 text-indigo-400" />
             </div>
             <div className="text-center">
@@ -163,7 +163,7 @@ export default function TeamPage() {
                 const closeRate = s.total > 0 ? Math.round((s.closed_won / s.total) * 100) : 0;
 
                 return (
-                  <div key={member.id} className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] p-5">
+                  <div key={member.id} className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] p-5">
                     {/* Top row */}
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
@@ -222,7 +222,7 @@ export default function TeamPage() {
             </div>
 
             {/* Leaderboard table */}
-            <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
+            <div className="bg-white dark:bg-white/[0.04] rounded-lg border border-slate-100/80 dark:border-white/[0.06] overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Leaderboard</h3>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Ranked by leads closed</p>
