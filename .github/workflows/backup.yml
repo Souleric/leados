@@ -1,0 +1,37 @@
+name: Daily DB Backup
+
+# Exports all LeadOS data to JSON and stores it as a downloadable artifact.
+# Restore = run supabase/setup-fresh.sql, then node scripts/restore-data.mjs.
+
+on:
+  schedule:
+    - cron: "0 18 * * *"   # daily 18:00 UTC = 02:00 Asia/Kuala_Lumpur
+  workflow_dispatch:        # allow manual runs from the Actions tab
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Export data
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          BACKUP_DIR: _backup
+        run: node scripts/backup-data.mjs
+
+      - name: Stamp artifact name
+        id: stamp
+        run: echo "date=$(date -u +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: leados-backup-${{ steps.stamp.outputs.date }}
+          path: _backup/
+          retention-days: 90
