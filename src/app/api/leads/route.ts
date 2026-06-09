@@ -21,12 +21,16 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = createAdminClient();
     const authUser = await getAuthUser();
+    const workspaceId = process.env.WORKSPACE_ID;
 
     let query = supabase
       .from("leads")
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(from, to);
+
+    // Scope strictly to THIS deployment's workspace (prevents cross-tenant leak).
+    if (workspaceId) query = query.eq("workspace_id", workspaceId);
 
     // Lifecycle filter — default to active_lead only (hides clients + inactive)
     if (lifecycle === "all") {

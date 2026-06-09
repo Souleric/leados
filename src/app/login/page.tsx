@@ -12,10 +12,12 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // If already logged in, redirect
+  // If already logged in, redirect (master admin → /master, else → /)
   useEffect(() => {
-    fetch("/api/auth/me").then((r) => {
-      if (r.ok) router.replace("/");
+    fetch("/api/auth/me").then(async (r) => {
+      if (!r.ok) return;
+      const d = await r.json().catch(() => null);
+      router.replace(d?.user?.is_master_admin ? "/master" : "/");
     });
   }, [router]);
 
@@ -34,7 +36,7 @@ export default function LoginPage() {
         setError(data.error ?? "Login failed");
         return;
       }
-      router.replace("/");
+      router.replace(data?.user?.is_master_admin ? "/master" : "/");
     } catch {
       setError("Network error. Please try again.");
     } finally {

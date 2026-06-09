@@ -27,6 +27,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Master-admin-only areas: block everyone else.
+  const isMaster = user.is_master_admin === true;
+  if ((pathname.startsWith("/master") || pathname.startsWith("/api/master")) && !isMaster) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
   // Attach user info to request headers for downstream use
   const headers = new Headers(request.headers);
   headers.set("x-auth-user-id", user.sub);

@@ -14,15 +14,30 @@ export async function POST(request: NextRequest) {
     const workspaceId = process.env.WORKSPACE_ID;
     if (!workspaceId) return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
 
-    // Find member by username (case-insensitive)
-    const { data: member, error } = await supabase
+    const cols = "id, name, username, password_hash, role, is_master_admin";
+
+    // 1) Normal user: find member scoped to THIS deployment's workspace.
+    let { data: member } = await supabase
       .from("team_members")
-      .select("id, name, username, password_hash, role, is_master_admin")
+      .select(cols)
       .eq("workspace_id", workspaceId)
       .ilike("username", username.trim())
-      .single();
+      .maybeSingle();
 
-    if (error || !member || !member.password_hash) {
+    // 2) Master admin: not tied to a workspace — match across all workspaces.
+    //    Lets the master admin sign in on any deployment via the same login page.
+    if (!member) {
+      const { data: masterMember } = await supabase
+        .from("team_members")
+        .select(cols)
+        .eq("is_master_admin", true)
+        .ilike("username", username.trim())
+        .limit(1)
+        .maybeSingle();
+      member = masterMember;
+    }
+
+    if (!member || !member.password_hash) {
       return NextResponse.json({ error: "Invalid username or password" }, { status: 401 });
     }
 
