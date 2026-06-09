@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutGrid, ShieldCheck, LogOut, X } from "lucide-react";
+import { LayoutGrid, ShieldCheck, LogOut, X, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useSidebar } from "./sidebar-context";
@@ -39,6 +39,7 @@ export function MasterSidebar() {
 
   const navItems = [
     { href: "/master", label: "Overview", icon: LayoutGrid },
+    { href: "/master/account", label: "Account", icon: KeyRound },
   ];
 
   const sidebarContent = (
@@ -70,7 +71,10 @@ export function MasterSidebar() {
           </p>
           <div className="space-y-0.5">
             {navItems.map(({ href, label, icon: Icon }) => {
-              const isActive = pathname === href || pathname.startsWith(href + "/");
+              const isActive =
+                pathname === href ||
+                (href !== "/master" && pathname.startsWith(href + "/")) ||
+                (href === "/master" && pathname.startsWith("/master/clients"));
               return (
                 <Link
                   key={href}
